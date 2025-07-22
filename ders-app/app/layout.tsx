@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/hooks/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { AppContent } from "./app-content";
 
 export const viewport = {
   width: 'device-width',
@@ -56,9 +57,7 @@ export default function RootLayout({
                 <ThemeToggle />
               </div>
             </div>
-            <main className="p-4 pb-24">
-              {children}
-            </main>
+            <AppContent>{children}</AppContent>
           </div>
         </ThemeProvider>
       </body>
