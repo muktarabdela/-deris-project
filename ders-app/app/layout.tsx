@@ -4,6 +4,14 @@ import "./globals.css";
 import { ThemeProvider } from "@/hooks/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
+};
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -17,6 +25,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Deris App",
   description: "Your Islamic learning journey starts here",
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
 };
 
 export default function RootLayout({
@@ -26,16 +35,30 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+      </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+        style={{
+          WebkitTextSizeAdjust: '100%',
+          WebkitTapHighlightColor: 'transparent',
+          touchAction: 'manipulation',
+        }}
       >
         <ThemeProvider>
-          <div className="min-h-screen p-4">
-            <div className="flex justify-between items-center mb-4">
-              <h1 className="text-xl font-semibold">Welcome to Deris</h1>
-              <ThemeToggle />
+          <div className="relative max-w-md mx-auto h-screen overflow-y-auto bg-background">
+            <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm p-4 border-b border-border">
+              <div className="flex justify-between items-center">
+                <h1 className="text-xl font-semibold">Deris</h1>
+                <ThemeToggle />
+              </div>
             </div>
-            {children}
+            <main className="p-4 pb-24">
+              {children}
+            </main>
           </div>
         </ThemeProvider>
       </body>
