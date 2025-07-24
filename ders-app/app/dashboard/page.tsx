@@ -231,15 +231,14 @@ export default function DashboardPage() {
                 {popularDers.map((ders) => (
                     <div
                         key={ders.id}
-                        // This card is a flex column to push progress to the bottom
-                        className="flex flex-col justify-between bg-[#1C1C1E] rounded-2xl p-4 w-60 flex-shrink-0"
+                        className="flex flex-col justify-between bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-colors w-60 flex-shrink-0"
                     >
                         {/* Top section with info */}
                         <div>
-                            <div className="w-16 h-16 bg-white/5 rounded-lg flex items-center justify-center mb-4">
-                                <Play className="w-6 h-6 text-white" />
+                            <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                                <Play className="w-6 h-6 text-primary" />
                             </div>
-                            <span className="text-xs font-medium px-2 py-1 bg-white/5 text-gray-300 rounded-full inline-block mb-2">
+                            <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full inline-block mb-2">
                                 {ders.category}
                             </span>
                             <h3 className="font-bold text-white line-clamp-1">{ders.title}</h3>

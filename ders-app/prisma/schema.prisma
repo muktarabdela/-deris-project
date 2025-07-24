@@ -1,0 +1,215 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma" // Your specified output path
+}
+
+datasource db {
+  provider = "postgresql" // Correct for Supabase
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum QuestionType {
+  MULTIPLE_CHOICE
+  SHORT_ANSWER
+}
+
+// -----------------------------
+// --- Models
+// -----------------------------
+
+// Merged User and Admin model for simplicity and better auth integration.
+
+model User {
+  id                  String   @id @default(cuid())
+  telegram_user_id    BigInt   @unique
+  first_name          String
+  username            String?
+  profile_picture_url String?
+  role                Role     @default(STUDENT)
+  points              Int      @default(0)
+
+  // --- Relations ---
+  current_ders_id     String?
+  
+  ders_progress       UserDersProgress[]
+  audio_part_progresses UserAudioPartProgress[]
+  bookmarks           Bookmark[]
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// Represents the teacher/lecturer.
+model Ustadh {
+  id        String @id @default(cuid())
+  name      String @unique
+  bio       String?
+  photo_url String?
+  
+  // An Ustadh can have many Derses.
+  derses    Ders[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+
+// Represents the category of a Ders (e.g., Tawheed, Fiqh).
+model Category {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String?
+  
+  // A category can contain many Derses.
+  derses      Ders[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Represents a full, structured lesson series or course.
+model Ders {
+  id                String    @id @default(cuid())
+  title             String
+  description       String
+  thumbnail_url     String?   // For a nice cover image in the UI.
+  book_pdf_url      String?   // Link to the supporting book/PDF.
+  is_published      Boolean   @default(false) // Allows admins to create drafts.
+  order             Int       @default(0)     // To order Derses within a category.
+
+  // --- Relations ---
+  ustadh_id         String
+  ustadh            Ustadh    @relation(fields: [ustadh_id], references: [id])
+  
+  category_id       String
+  category          Category  @relation(fields: [category_id], references: [id])
+  
+  // A Ders is composed of multiple audio parts.
+  audio_parts       AudioPart[]
+
+  // Tracks the progress of all users in this Ders.
+  user_progress     UserDersProgress[]
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+// Represents a single audio lesson within a Ders.
+model AudioPart {
+  id                    String    @id @default(cuid())
+  title                 String
+  telegram_message_link String    // The link you copy-paste.
+  telegram_file_id      String?   // Optional: store for direct API access.
+  duration_in_seconds   Int?      // Useful to display to the user.
+  order                 Int       // The sequence of this part within its Ders.
+  
+  // --- Relations ---
+  ders_id               String
+  ders                  Ders      @relation(fields: [ders_id], references: [id], onDelete: Cascade)
+  
+  // Each audio part has one associated quiz.
+  quiz                  Quiz?
+
+  // Tracks the progress of all users on this specific part.
+  user_progress         UserAudioPartProgress[]
+
+  // Tracks all user bookmarks for this part.
+  bookmarks             Bookmark[]
+
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+}
+
+// Each AudioPart can have one Quiz.
+model Quiz {
+  id           String    @id @default(cuid())
+  
+  // --- Relations ---
+  // A quiz belongs to exactly one audio part.
+  audio_part_id String    @unique
+  audio_part    AudioPart @relation(fields: [audio_part_id], references: [id], onDelete: Cascade)
+
+  questions     QuizQuestion[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+// Each Quiz contains several questions.
+model QuizQuestion {
+  id          String   @id @default(cuid())
+  question    String
+  options     String[] // For multiple-choice questions.
+  
+  // Stores the text of the correct answer. More flexible than an index.
+  correct_answer String
+  
+  // HUGE value-add: Explain why the answer is correct.
+  explanation String?
+
+  // --- Relations ---
+  quiz_id     String
+  quiz        Quiz     @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+}
+
+// Tracks a user's overall progress within a single Ders.
+model UserDersProgress {
+  id         String   @id @default(cuid())
+  user_id    String
+  ders_id    String
+  status     DersStatus @default(IN_PROGRESS)
+  started_at DateTime @default(now())
+  completed_at DateTime?
+
+  // --- Relations ---
+  user       User     @relation(fields: [user_id], references: [id])
+  ders       Ders     @relation(fields: [ders_id], references: [id])
+
+  // Ensures a user can only have one progress entry per Ders.
+  @@unique([user_id, ders_id])
+}
+
+enum DersStatus {
+  IN_PROGRESS
+  COMPLETED
+}
+
+// Tracks completion and quiz scores for each specific audio part.
+model UserAudioPartProgress {
+  id            String   @id @default(cuid())
+  user_id       String
+  audio_part_id String
+  quiz_score    Int?     // Score achieved on the quiz for this part.
+  quiz_attempts Int      @default(0)
+  is_completed  Boolean  @default(false)
+  
+  // --- Relations ---
+  user          User     @relation(fields: [user_id], references: [id])
+  audio_part    AudioPart @relation(fields: [audio_part_id], references: [id])
+  
+  // Ensures a user has only one progress entry per audio part.
+  @@unique([user_id, audio_part_id])
+}
+
+// Allows users to save specific audio parts for later.
+model Bookmark {
+  id            String   @id @default(cuid())
+  user_id       String
+  audio_part_id String
+  
+  // --- Relations ---
+  user          User     @relation(fields: [user_id], references: [id])
+  audio_part    AudioPart @relation(fields: [audio_part_id], references: [id])
+
+  createdAt     DateTime @default(now())
+  
+  @@unique([user_id, audio_part_id])
+}

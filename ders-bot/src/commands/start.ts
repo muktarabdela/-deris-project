@@ -9,7 +9,7 @@ export const registerStartCommand = (bot: Bot) => {
 
 		const keyboard = new InlineKeyboard().webApp(
 			"🕋 Start Learning",
-			"https://59c6713a5510.ngrok-free.app"
+			"https://34339fa03e3d.ngrok-free.app"
 		);
 
 		ctx.reply(
