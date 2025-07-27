@@ -242,18 +242,18 @@ export default function DashboardPage() {
                                 {ders.category}
                             </span>
                             <h3 className="font-bold text-white line-clamp-1">{ders.title}</h3>
-                            <p className="text-sm text-gray-400 line-clamp-1">{ders.description}</p>
+                            <p className="text-sm text-muted-foreground line-clamp-1">{ders.description}</p>
                         </div>
                         
                         {/* Bottom section with progress bar */}
                         <div className="mt-4">
-                            <div className="flex justify-between text-xs text-gray-400 mb-1.5">
+                            <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                                 <span>{ders.completedParts}/{ders.totalParts} Parts</span>
                                 <span>{Math.round(ders.progress)}%</span>
                             </div>
-                            <div className="w-full bg-white/10 rounded-full h-1.5">
+                            <div className="w-full bg-muted rounded-full h-1.5">
                                 <div
-                                    className="bg-gray-200 h-1.5 rounded-full"
+                                    className="bg-primary h-1.5 rounded-full"
                                     style={{ width: `${ders.progress}%` }}
                                 />
                             </div>

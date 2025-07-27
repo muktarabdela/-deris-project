@@ -26,7 +26,6 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Deris App",
   description: "Your Islamic learning journey starts here",
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover',
 };
 
 export default function RootLayout({

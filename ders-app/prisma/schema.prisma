@@ -16,19 +16,12 @@ enum Role {
   ADMIN
 }
 
-enum QuestionType {
-  MULTIPLE_CHOICE
-  SHORT_ANSWER
-}
-
 // -----------------------------
 // --- Models
 // -----------------------------
 
-// Merged User and Admin model for simplicity and better auth integration.
-
 model User {
-  id                  String   @id @default(cuid())
+  id                  String   @id @default(uuid()) @db.Uuid
   telegram_user_id    BigInt   @unique
   first_name          String
   username            String?
@@ -36,7 +29,6 @@ model User {
   role                Role     @default(STUDENT)
   points              Int      @default(0)
 
-  // --- Relations ---
   current_ders_id     String?
   
   ders_progress       UserDersProgress[]
@@ -45,136 +37,125 @@ model User {
 
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
+
+  @@map("users") // Maps this model to the 'users' table in the DB
 }
 
-// Represents the teacher/lecturer.
 model Ustadh {
-  id        String @id @default(cuid())
+  id        String   @id @default(uuid()) @db.Uuid
   name      String @unique
   bio       String?
   photo_url String?
   
-  // An Ustadh can have many Derses.
   derses    Ders[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("ustadhs")
 }
 
-
-// Represents the category of a Ders (e.g., Tawheed, Fiqh).
 model Category {
-  id          String @id @default(cuid())
+  id          String   @id @default(uuid()) @db.Uuid
   name        String @unique
   description String?
   
-  // A category can contain many Derses.
   derses      Ders[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@map("categories")
 }
 
-// Represents a full, structured lesson series or course.
 model Ders {
-  id                String    @id @default(cuid())
+  id                String    @id @default(uuid()) @db.Uuid
   title             String
   description       String
-  thumbnail_url     String?   // For a nice cover image in the UI.
-  book_pdf_url      String?   // Link to the supporting book/PDF.
-  is_published      Boolean   @default(false) // Allows admins to create drafts.
-  order             Int       @default(0)     // To order Derses within a category.
+  thumbnail_url     String?
+  book_pdf_url      String?
+  is_published      Boolean   @default(false)
+  order             Int       @default(0)
 
-  // --- Relations ---
-  ustadh_id         String
+  ustadh_id         String   @db.Uuid
   ustadh            Ustadh    @relation(fields: [ustadh_id], references: [id])
   
-  category_id       String
+  category_id       String   @db.Uuid
   category          Category  @relation(fields: [category_id], references: [id])
   
-  // A Ders is composed of multiple audio parts.
   audio_parts       AudioPart[]
-
-  // Tracks the progress of all users in this Ders.
   user_progress     UserDersProgress[]
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
+
+  @@map("derses") // Changed to plural for consistency
 }
 
-// Represents a single audio lesson within a Ders.
 model AudioPart {
-  id                    String    @id @default(cuid())
+  id                    String    @id @default(uuid()) @db.Uuid
   title                 String
-  telegram_message_link String    // The link you copy-paste.
-  telegram_file_id      String?   // Optional: store for direct API access.
-  duration_in_seconds   Int?      // Useful to display to the user.
-  order                 Int       // The sequence of this part within its Ders.
-  
-  // --- Relations ---
-  ders_id               String
+  telegram_message_link String
+  telegram_file_id      String?
+  duration_in_seconds   Int?
+  order                 Int
+
+  ders_id               String   @db.Uuid
   ders                  Ders      @relation(fields: [ders_id], references: [id], onDelete: Cascade)
   
-  // Each audio part has one associated quiz.
   quiz                  Quiz?
-
-  // Tracks the progress of all users on this specific part.
   user_progress         UserAudioPartProgress[]
-
-  // Tracks all user bookmarks for this part.
   bookmarks             Bookmark[]
 
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
+
+  @@map("audio_parts")
 }
 
-// Each AudioPart can have one Quiz.
 model Quiz {
-  id           String    @id @default(cuid())
+  id           String    @id @default(uuid()) @db.Uuid
   
-  // --- Relations ---
-  // A quiz belongs to exactly one audio part.
-  audio_part_id String    @unique
+  // Add @unique to this line
+  audio_part_id String    @unique @db.Uuid
+
   audio_part    AudioPart @relation(fields: [audio_part_id], references: [id], onDelete: Cascade)
 
   questions     QuizQuestion[]
 
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-}
 
-// Each Quiz contains several questions.
+  @@map("quizzes")
+}
 model QuizQuestion {
-  id          String   @id @default(cuid())
-  question    String
-  options     String[] // For multiple-choice questions.
-  
-  // Stores the text of the correct answer. More flexible than an index.
+  id             String   @id @default(uuid()) @db.Uuid
+  question       String
+  options        String[]
   correct_answer String
-  
-  // HUGE value-add: Explain why the answer is correct.
-  explanation String?
+  explanation    String?
 
-  // --- Relations ---
-  quiz_id     String
+  quiz_id     String   @db.Uuid
   quiz        Quiz     @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+
+  @@map("quiz_questions")
 }
 
-// Tracks a user's overall progress within a single Ders.
 model UserDersProgress {
-  id         String   @id @default(cuid())
-  user_id    String
-  ders_id    String
+  id         String   @id @default(uuid()) @db.Uuid
+  user_id    String   @db.Uuid
+  ders_id    String   @db.Uuid
+
+
   status     DersStatus @default(IN_PROGRESS)
   started_at DateTime @default(now())
   completed_at DateTime?
 
-  // --- Relations ---
   user       User     @relation(fields: [user_id], references: [id])
   ders       Ders     @relation(fields: [ders_id], references: [id])
 
-  // Ensures a user can only have one progress entry per Ders.
   @@unique([user_id, ders_id])
+  @@map("user_ders_progress")
 }
 
 enum DersStatus {
@@ -182,34 +163,31 @@ enum DersStatus {
   COMPLETED
 }
 
-// Tracks completion and quiz scores for each specific audio part.
 model UserAudioPartProgress {
-  id            String   @id @default(cuid())
-  user_id       String
-  audio_part_id String
-  quiz_score    Int?     // Score achieved on the quiz for this part.
+  id            String   @id @default(uuid()) @db.Uuid
+  user_id       String   @db.Uuid
+  audio_part_id String   @db.Uuid
+  quiz_score    Int?
   quiz_attempts Int      @default(0)
   is_completed  Boolean  @default(false)
   
-  // --- Relations ---
   user          User     @relation(fields: [user_id], references: [id])
   audio_part    AudioPart @relation(fields: [audio_part_id], references: [id])
   
-  // Ensures a user has only one progress entry per audio part.
   @@unique([user_id, audio_part_id])
+  @@map("user_audio_part_progress")
 }
 
-// Allows users to save specific audio parts for later.
 model Bookmark {
-  id            String   @id @default(cuid())
-  user_id       String
-  audio_part_id String
+  id            String   @id @default(uuid()) @db.Uuid
+  user_id       String   @db.Uuid
+  audio_part_id String   @db.Uuid
   
-  // --- Relations ---
   user          User     @relation(fields: [user_id], references: [id])
   audio_part    AudioPart @relation(fields: [audio_part_id], references: [id])
 
   createdAt     DateTime @default(now())
   
   @@unique([user_id, audio_part_id])
+  @@map("bookmarks")
 }
