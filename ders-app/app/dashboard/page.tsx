@@ -1,9 +1,19 @@
 "use client";
 
+import { getUserByTelegramUserId } from '@/lib/services/users/userService';
+import { getTelegramUser } from '@/lib/utils/telegram';
 import { motion } from 'framer-motion';
-import { BookOpen, Award, Clock, Play, ChevronRight, Flame } from 'lucide-react';
+import { BookOpen, Award, Clock, Play, ChevronRight, Flame, Check } from 'lucide-react';
 import Link from 'next/link';
-import { JSX } from 'react';
+import { useRouter } from 'next/navigation';
+import { JSX, useEffect, useState } from 'react';
+
+interface UserProfile {
+    id: string;
+    first_name: string;
+    username: string;
+    profile_picture_url: string;
+}
 
 type Ders = {
     id: string;
@@ -25,7 +35,38 @@ type Category = {
 };
 
 export default function DashboardPage() {
-    // Mock user data - in a real app, this would come from a context or API
+
+    const tgUser = getTelegramUser();
+
+    const router = useRouter();
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+
+    useEffect(() => {
+        if (tgUser) {
+            const getUserProfile = async () => {
+                try {
+                    const response = await getUserByTelegramUserId(tgUser?.id);
+                    console.log("response", response);
+
+                    if (response) {
+                        setUserProfile({
+                            id: response.id,
+                            first_name: response.first_name,
+                            username: response.username,
+                            profile_picture_url: response.profile_picture_url,
+                        });
+                    } else {
+                        router.push('/dashboard');
+                    }
+                } catch (error) {
+                    console.error('Error fetching user:', error);
+                }
+            };
+
+            getUserProfile();
+        }
+    }, [tgUser, router]);
+
     const userName = "Muktar";
     const userLevel = "Beginner";
     const userCategories = ["Tajweed", "Al-Qaida"];
@@ -45,7 +86,7 @@ export default function DashboardPage() {
         isPopular: true,
     };
 
-    const popularDers: Ders[] = [
+    const shortDers: Ders[] = [
         {
             id: '2',
             title: 'Noorani Qaida - Lesson 1',
@@ -98,8 +139,8 @@ export default function DashboardPage() {
                 transition={{ duration: 0.5 }}
                 className="mb-8"
             >
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-                    Welcome back, <span className="text-primary">{userName}</span> 👋
+                <h1 className="text-2xl md:text-2xl font-bold text-foreground">
+                    Welcome back, <span className="text-primary">{userProfile?.first_name}</span> 👋
                 </h1>
 
                 <div className="mt-4 flex flex-wrap gap-4">
@@ -142,10 +183,10 @@ export default function DashboardPage() {
                 className="mb-10"
             >
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-foreground">Continue Learning</h2>
-                    <Link href="/my-learning" className="text-sm text-primary hover:underline flex items-center">
+                    <h2 className="text-xl font-bold text-foreground">Current Ders</h2>
+                    {/* <Link href="/my-learning" className="text-sm text-primary hover:underline flex items-center">
                         View all <ChevronRight className="w-4 h-4" />
-                    </Link>
+                    </Link> */}
                 </div>
 
                 <div className="bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-colors">
@@ -168,7 +209,7 @@ export default function DashboardPage() {
                             <div className="space-y-1">
                                 <div className="flex justify-between text-xs text-muted-foreground">
                                     <span>Progress</span>
-                                    <span>{currentDers.completedParts} of {currentDers.totalParts} AudioParts</span>
+                                    <span>{currentDers.completedParts} of {currentDers.totalParts} Parts</span>
                                 </div>
                                 <div className="w-full bg-muted rounded-full h-2">
                                     <div
@@ -185,30 +226,50 @@ export default function DashboardPage() {
                 </div>
             </motion.section>
 
-            {/* Categories Section */}
-            <motion.section
+            {/* Short Ders Section */}
+            {/* <motion.section
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 0.2 }}
                 className="mb-10"
             >
-                <h2 className="text-xl font-bold text-foreground mb-4">Categories</h2>
-                <div className="flex gap-3 pb-2 overflow-x-auto scrollbar-hide">
-                    {categories.map((category) => (
+                <div className="flex items-center justify-between">
+                    <h2 className="text-xl font-bold text-foreground mb-4">Short Ders</h2>
+                    <Link href="/my-learning" className="text-sm text-primary hover:underline flex items-center">
+                        View all <ChevronRight className="w-4 h-4" />
+                    </Link>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {shortDers.map((ders) => (
                         <Link
-                            key={category.id}
-                            href={`/category/${category.id}`}
-                            className="flex flex-col items-center justify-center p-4 min-w-[120px] border border-border rounded-xl hover:border-primary/50 hover:bg-accent/50 transition-colors"
+                            key={ders.id}
+                            href={`/ders/${ders.id}`}
+                            className="flex flex-col p-4 bg-card rounded-xl border border-border hover:border-primary/50 hover:bg-accent/50 transition-colors"
                         >
-                            <div className="p-2 bg-primary/10 rounded-lg mb-2 text-primary">
-                                {category.icon}
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="p-2 bg-primary/10 rounded-lg">
+                                    <Play className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                    <p className="text-sm text-muted-foreground">{ders.category}</p>
+                                    <p className="font-medium">{ders.title}</p>
+                                </div>
                             </div>
-                            <span className="font-medium text-sm text-center">{category.name}</span>
-                            <span className="text-xs text-muted-foreground">{category.count} Ders</span>
+                            <p className="text-xs text-muted-foreground">{ders.description}</p>
+                            <div className="mt-4 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <Clock className="w-4 h-4" />
+                                    <span className="text-xs">{ders.duration}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <Check className="w-4 h-4 text-primary" />
+                                    <span className="text-xs">{ders.completedParts} of {ders.totalParts} Parts</span>
+                                </div>
+                            </div>
                         </Link>
                     ))}
                 </div>
-            </motion.section>
+            </motion.section> */}
 
             {/* Popular Ders Section */}
             <motion.section
@@ -220,7 +281,7 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                         <Flame className="w-5 h-5 text-orange-500" />
-                        Popular Ders
+                        Short Ders
                     </h2>
                     <Link href="/popular" className="text-sm text-primary hover:underline flex items-center">
                         See all <ChevronRight className="w-4 h-4" />
@@ -228,39 +289,39 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-hide">
-                {popularDers.map((ders) => (
-                    <div
-                        key={ders.id}
-                        className="flex flex-col justify-between bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-colors w-60 flex-shrink-0"
-                    >
-                        {/* Top section with info */}
-                        <div>
-                            <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                                <Play className="w-6 h-6 text-primary" />
+                    {shortDers.map((ders) => (
+                        <div
+                            key={ders.id}
+                            className="flex flex-col justify-between bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-colors w-60 flex-shrink-0"
+                        >
+                            {/* Top section with info */}
+                            <div>
+                                <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                                    <Play className="w-6 h-6 text-primary" />
+                                </div>
+                                <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full inline-block mb-2">
+                                    {ders.category}
+                                </span>
+                                <h3 className="font-bold text-white line-clamp-1">{ders.title}</h3>
+                                <p className="text-sm text-muted-foreground line-clamp-1">{ders.description}</p>
                             </div>
-                            <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full inline-block mb-2">
-                                {ders.category}
-                            </span>
-                            <h3 className="font-bold text-white line-clamp-1">{ders.title}</h3>
-                            <p className="text-sm text-muted-foreground line-clamp-1">{ders.description}</p>
+
+                            {/* Bottom section with progress bar */}
+                            <div className="mt-4">
+                                <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
+                                    <span>{ders.completedParts}/{ders.totalParts} Parts</span>
+                                    <span>{Math.round(ders.progress)}%</span>
+                                </div>
+                                <div className="w-full bg-muted rounded-full h-1.5">
+                                    <div
+                                        className="bg-primary h-1.5 rounded-full"
+                                        style={{ width: `${ders.progress}%` }}
+                                    />
+                                </div>
+                            </div>
                         </div>
-                        
-                        {/* Bottom section with progress bar */}
-                        <div className="mt-4">
-                            <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                                <span>{ders.completedParts}/{ders.totalParts} Parts</span>
-                                <span>{Math.round(ders.progress)}%</span>
-                            </div>
-                            <div className="w-full bg-muted rounded-full h-1.5">
-                                <div
-                                    className="bg-primary h-1.5 rounded-full"
-                                    style={{ width: `${ders.progress}%` }}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
+                    ))}
+                </div>
             </motion.section>
         </div>
     );

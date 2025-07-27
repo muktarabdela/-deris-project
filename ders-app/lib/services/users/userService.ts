@@ -46,3 +46,21 @@ export async function upsertTelegramUser({
 		throw err;
 	}
 }
+
+// create a function to get user by id
+export async function getUserByTelegramUserId(telegramUserId: number) {
+	try {
+		const { data, error } = await supabase
+			.from("users")
+			.select("*")
+			.eq("telegram_user_id", telegramUserId);
+		if (error) {
+			console.error("Supabase Select Error:", error);
+			throw new Error(`User select failed: ${error.message}`);
+		}
+		return data[0];
+	} catch (err) {
+		console.error("Error during user select:", err);
+		throw err;
+	}
+}

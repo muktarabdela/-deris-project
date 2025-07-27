@@ -4,6 +4,8 @@ import "./globals.css";
 import { ThemeProvider } from "@/hooks/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AppContent } from "./app-content";
+import { ProfileButton } from "@/components/profile-button";
+import { AuthProvider } from "@/context/authContext";
 
 export const viewport = {
   width: 'device-width',
@@ -53,10 +55,17 @@ export default function RootLayout({
             <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm p-4 border-b border-border">
               <div className="flex justify-between items-center">
                 <h1 className="text-xl font-semibold">Deris</h1>
-                <ThemeToggle />
+                <div className="flex items-center gap-2">
+                  <ThemeToggle />
+                  <ProfileButton />
+                </div>
               </div>
             </div>
-            <AppContent>{children}</AppContent>
+            <AppContent>
+              <AuthProvider>
+                {children}
+              </AuthProvider>
+            </AppContent>
           </div>
         </ThemeProvider>
       </body>

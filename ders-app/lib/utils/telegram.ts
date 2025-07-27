@@ -7,31 +7,53 @@ declare global {
 	}
 }
 
+const USE_DUMMY_DATA = process.env.NEXT_PUBLIC_USE_DUMMY_TELEGRAM === 'true';
+
 interface ITelegramWebApp {
 	ready: () => void;
+	expand: () => void;
 	initDataUnsafe: {
 		user?: {
 			id: number; // Telegram User ID
 			first_name: string;
 			username?: string;
 			photo_url?: string;
-			// ... other potential user fields
 		};
 	};
-	// Add other methods/properties you might need later
 }
 
+// Dummy Telegram user data for development
+const DUMMY_USER = {
+    id: 87654321,
+    first_name: "Test",
+    username: "test_user",
+    photo_url: "https://via.placeholder.com/150",
+    auth_date: Math.floor(Date.now() / 1000),
+    hash: 'development_hash'
+  };
+
 /**
- * Loads the Telegram WebApp script dynamically.
- * @returns A promise that resolves when the script is loaded.
+ * Loads the Telegram WebApp script dynamically or uses dummy data in development.
+ * @returns A promise that resolves when the script is loaded or dummy data is ready.
  */
 export function loadTelegramWebApp(): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if (typeof window === "undefined") {
-			// Not running in a browser environment
-			reject(
-				new Error("Cannot load Telegram WebApp outside of browser.")
-			);
+			reject(new Error("Cannot load Telegram WebApp outside of browser."));
+			return;
+		}
+
+		// In development, use dummy data if not in Telegram WebView
+		if (USE_DUMMY_DATA && !window.Telegram?.WebApp) {
+			console.warn('Development mode: Using dummy Telegram user data');
+			window.Telegram = window.Telegram || {
+				WebApp: {
+					ready: () => console.log('Dummy Telegram WebApp ready'),
+					expand: () => console.log('Dummy Telegram WebApp expand called'),
+					initDataUnsafe: { user: DUMMY_USER }
+				}
+			};
+			resolve();
 			return;
 		}
 
@@ -41,14 +63,10 @@ export function loadTelegramWebApp(): Promise<void> {
 			return;
 		}
 
-		// Check if script is already being loaded
-		const existingScript = document.getElementById(
-			"telegram-webapp-script"
-		);
+		// Rest of the original loading logic
+		const existingScript = document.getElementById("telegram-webapp-script");
 		if (existingScript) {
-			// Wait for load or handle if already loaded
 			existingScript.addEventListener("load", () => resolve());
-			// Basic check if it loaded quickly before the event listener
 			if (window.Telegram?.WebApp) resolve();
 			return;
 		}
@@ -56,7 +74,7 @@ export function loadTelegramWebApp(): Promise<void> {
 		const script = document.createElement("script");
 		script.src = "https://telegram.org/js/telegram-web-app.js";
 		script.async = true;
-		script.id = "telegram-webapp-script"; // Give it an ID for easy checking
+		script.id = "telegram-webapp-script";
 		script.onload = () => {
 			console.log("Telegram WebApp script loaded.");
 			resolve();
@@ -69,13 +87,17 @@ export function loadTelegramWebApp(): Promise<void> {
 		document.head.appendChild(script);
 	});
 }
-
 /**
  * Gets the current Telegram user data.
- * Assumes the Telegram WebApp SDK is loaded.
+ * In development, returns dummy data when not in Telegram WebView.
  * @returns The user data object or null if not available.
  */
 export function getTelegramUser() {
+	if (USE_DUMMY_DATA && (!window.Telegram?.WebApp || !window.Telegram.WebApp.initDataUnsafe?.user)) {
+		console.warn('Development mode: Returning dummy Telegram user');
+		return DUMMY_USER;
+	}
+	
 	if (typeof window !== "undefined" && window.Telegram?.WebApp) {
 		return window.Telegram.WebApp.initDataUnsafe?.user || null;
 	}
@@ -84,12 +106,16 @@ export function getTelegramUser() {
 
 /**
  * Signals to Telegram that the WebApp is ready.
- * Assumes the Telegram WebApp SDK is loaded.
+ * In development, logs to console when not in Telegram WebView.
  */
 export function expandTelegramWebApp() {
+	if (USE_DUMMY_DATA && !window.Telegram?.WebApp) {
+		console.log('Dummy Telegram WebApp expand called');
+		return;
+	}
+	
 	if (typeof window !== "undefined" && window.Telegram?.WebApp) {
-		window.Telegram.WebApp.ready(); // Signal readiness
-		// You might also want to use expand or other methods later
-		// window.Telegram.WebApp.expand(); // Expand to full screen if needed
+		window.Telegram.WebApp.ready();
+		// window.Telegram.WebApp.expand(); // Uncomment if you want to expand in production
 	}
 }
