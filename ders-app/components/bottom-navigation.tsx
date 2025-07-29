@@ -4,6 +4,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Home, Trophy, Bookmark } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function BottomNavigation() {
     const pathname = usePathname();
@@ -30,21 +31,26 @@ export function BottomNavigation() {
         <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border z-50">
             <div className="max-w-md mx-auto px-4">
                 <div className="flex justify-around items-center h-16">
-                    {navItems.map((item) => (
-                        <Link
-                            key={item.path}
-                            href={item.path}
-                            className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === item.path
-                                ? 'text-primary'
-                                : 'text-muted-foreground hover:text-foreground'
-                                } transition-colors`}
-                        >
-                            <div className="mb-1">
+                    {navItems.map((item) => {
+                        const isActive = pathname === item.path;
+                        return (
+                            <Link
+                                key={item.path}
+                                href={item.path}
+                                className={cn(
+                                    'flex items-center p-3 rounded-md text-sm font-medium',
+                                    'transition-colors mb-1',
+                                    isActive
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-foreground hover:bg-accent hover:text-accent-foreground',
+                                    isActive && 'bg-primary/90'
+                                )}
+
+                            >
                                 {item.icon}
-                            </div>
-                            {/* <span className="text-xs">{item.name}</span> */}
-                        </Link>
-                    ))}
+                            </Link>
+                        );
+                    })}
                 </div>
             </div>
         </nav>

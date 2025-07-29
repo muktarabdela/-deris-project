@@ -1,53 +1,51 @@
 import { supabase } from '@/lib/supabase';
 
-export type Ustadh = {
+export type Category = {
     id: string;
     name: string;
-    bio?: string | null;
-    photo_url?: string | null;
-    createdAt?: string;
-    updatedAt?: string;
+    createdAt: string;
+    updatedAt: string;
 };
 
-export type CreateUstadhInput = Omit<Ustadh, 'id' | 'createdAt' | 'updatedAt'>;
-export type UpdateUstadhInput = Partial<CreateUstadhInput>;
+export type CreateCategoryInput = Omit<Category, 'id' | 'createdAt' | 'updatedAt'>;
+export type UpdateCategoryInput = Partial<CreateCategoryInput>;
 
-const TABLE_NAME = 'ustadhs';
+const TABLE_NAME = 'categories';
 
-export const ustadhService = {
-    // Create a new ustadh
-    async create(ustadh: CreateUstadhInput): Promise<Ustadh> {
+export const categoryService = {
+    // Create a new category
+    async create(category: CreateCategoryInput): Promise<Category> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
-            .insert(ustadh)
+            .insert(category)
             .select()
             .single();
 
         if (error) {
-            console.error('Error creating ustadh:', error);
+            console.error('Error creating category:', error);
             throw new Error(error.message);
         }
 
         return data;
     },
 
-    // Get all ustadhs
-    async getAll(): Promise<Ustadh[]> {
+    // Get all categories
+    async getAll(): Promise<Category[]> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')
             .order('name', { ascending: true });
 
         if (error) {
-            console.error('Error fetching ustadhs:', error);
+            console.error('Error fetching categories:', error);
             throw new Error(error.message);
         }
 
         return data || [];
     },
 
-    // Get a single ustadh by ID
-    async getById(id: string): Promise<Ustadh | null> {
+    // Get a single category by ID
+    async getById(id: string): Promise<Category | null> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')
@@ -58,15 +56,15 @@ export const ustadhService = {
             if (error.code === 'PGRST116') { // Not found
                 return null;
             }
-            console.error('Error fetching ustadh:', error);
+            console.error('Error fetching category:', error);
             throw new Error(error.message);
         }
 
         return data;
     },
 
-    // Update an ustadh
-    async update(id: string, updates: UpdateUstadhInput): Promise<Ustadh> {
+    // Update a category
+    async update(id: string, updates: UpdateCategoryInput): Promise<Category> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .update({
@@ -78,14 +76,14 @@ export const ustadhService = {
             .single();
 
         if (error) {
-            console.error('Error updating ustadh:', error);
+            console.error('Error updating category:', error);
             throw new Error(error.message);
         }
 
         return data;
     },
 
-    // Delete an ustadh
+    // Delete a category
     async delete(id: string): Promise<void> {
         const { error } = await supabase
             .from(TABLE_NAME)
@@ -93,13 +91,13 @@ export const ustadhService = {
             .eq('id', id);
 
         if (error) {
-            console.error('Error deleting ustadh:', error);
+            console.error('Error deleting category:', error);
             throw new Error(error.message);
         }
     },
 
-    // Search ustadhs by name
-    async search(query: string): Promise<Ustadh[]> {
+    // Search categories by name
+    async search(query: string): Promise<Category[]> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')
@@ -107,7 +105,7 @@ export const ustadhService = {
             .order('name', { ascending: true });
 
         if (error) {
-            console.error('Error searching ustadhs:', error);
+            console.error('Error searching categories:', error);
             throw new Error(error.message);
         }
 
