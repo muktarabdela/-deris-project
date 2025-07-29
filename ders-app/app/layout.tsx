@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { ProfileButton } from "@/components/profile-button";
 import { AuthProvider } from "@/context/authContext";
 import { AppContent } from "@/components/app-content";
+import { ConditionalLayoutWrapper } from "@/components/conditional-layout-wrapper";
 
 export const viewport = {
     width: 'device-width',
@@ -46,22 +47,9 @@ export default function RootLayout({
                 }}
             >
                 <ThemeProvider>
-                    <div className="relative max-w-md mx-auto h-screen overflow-y-auto bg-background">
-                        <div className="sticky top-0 z-10 bg-background/80 backdrop-blur-sm p-4 border-b border-border">
-                            <div className="flex justify-between items-center">
-                                <h1 className="text-xl font-semibold">Deris</h1>
-                                <div className="flex items-center gap-2">
-                                    <ThemeToggle />
-                                    <ProfileButton />
-                                </div>
-                            </div>
-                        </div>
-                        <AppContent>
-                            <AuthProvider>
-                                {children}
-                            </AuthProvider>
-                        </AppContent>
-                    </div>
+                    <ConditionalLayoutWrapper>
+                        {children}
+                    </ConditionalLayoutWrapper>
                 </ThemeProvider>
             </body>
         </html>

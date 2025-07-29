@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 // Adjust your import paths as needed
 import { loadTelegramWebApp, getTelegramUser, expandTelegramWebApp } from '@/lib/utils/telegram';
-import { upsertTelegramUser } from '@/lib/services/users/userService';
+import { upsertTelegramUser } from '@/lib/services/userService';
 
 export default function Home() {
     const router = useRouter();

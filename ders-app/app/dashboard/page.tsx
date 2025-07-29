@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { getUserByTelegramUserId } from '@/lib/services/users/userService';
+import { getUserByTelegramUserId } from '@/lib/services/userService';
 import { getTelegramUser } from '@/lib/utils/telegram';
 import { motion } from 'framer-motion';
 import { BookOpen, Award, Clock, Play, ChevronRight, Flame, Check } from 'lucide-react';
