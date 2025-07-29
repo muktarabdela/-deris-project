@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Noto_Sans_Ethiopic } from 'next/font/google';
 import "./globals.css";
 import { ThemeProvider } from "@/hooks/theme-provider";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -15,14 +15,9 @@ export const viewport = {
     viewportFit: 'cover',
 };
 
-const geistSans = Geist({
-    variable: "--font-geist-sans",
-    subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-    variable: "--font-geist-mono",
-    subsets: ["latin"],
+const noto = Noto_Sans_Ethiopic({
+    subsets: ['ethiopic'],
+    weight: ['400', '700']
 });
 
 export const metadata: Metadata = {
@@ -43,7 +38,7 @@ export default function RootLayout({
                 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
             </head>
             <body
-                className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
+                className={`${noto.className} antialiased bg-background text-foreground`}
                 style={{
                     WebkitTextSizeAdjust: '100%',
                     WebkitTapHighlightColor: 'transparent',
