@@ -141,7 +141,7 @@ export default function DashboardPage() {
                 className="mb-8"
             >
                 <h1 className="text-2xl md:text-2xl font-bold text-foreground">
-                    Welcome back, <span className="text-primary">{userProfile?.first_name}</span> 👋
+                    እንኳን ደህና መለስህ, <span className="text-primary">{userProfile?.first_name}</span> 👋
                 </h1>
 
                 <div className="mt-4 flex flex-wrap gap-4">
@@ -153,7 +153,7 @@ export default function DashboardPage() {
                             <div>
                                 <p className="text-sm text-muted-foreground">Today's Progress</p>
                                 <p className="font-medium">
-                                    {completedDersToday}/{totalDailyGoal} Ders completed
+                                    {completedDersToday}/{totalDailyGoal} የተጠናቀቁ ደረሶች
                                 </p>
                             </div>
                         </div>
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                 className="mb-10"
             >
                 <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-bold text-foreground">Current Ders</h2>
+                    <h2 className="text-xl font-bold text-foreground">የተጀመር ደረስ</h2>
                     {/* <Link href="/my-learning" className="text-sm text-primary hover:underline flex items-center">
                         View all <ChevronRight className="w-4 h-4" />
                     </Link> */}
@@ -210,7 +210,7 @@ export default function DashboardPage() {
                             <div className="space-y-1">
                                 <div className="flex justify-between text-xs text-muted-foreground">
                                     <span>Progress</span>
-                                    <span>{currentDers.completedParts} of {currentDers.totalParts} Parts</span>
+                                    <span>{currentDers.completedParts} of {currentDers.totalParts} ክፍሎች</span>
                                 </div>
                                 <div className="w-full bg-muted rounded-full h-2">
                                     <div
@@ -221,7 +221,7 @@ export default function DashboardPage() {
                             </div>
                         </div>
                         <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
-                            Continue
+                            መማር ይቀጥሉ
                         </button>
                     </div>
                 </div>
@@ -282,10 +282,10 @@ export default function DashboardPage() {
                 <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                         <Flame className="w-5 h-5 text-orange-500" />
-                        Short Ders
+                        አጫጭር ትምህርቶች
                     </h2>
                     <Link href="/popular" className="text-sm text-primary hover:underline flex items-center">
-                        See all <ChevronRight className="w-4 h-4" />
+                        ሁሉንም ይመልከቱ <ChevronRight className="w-4 h-4" />
                     </Link>
                 </div>
 
@@ -310,10 +310,10 @@ export default function DashboardPage() {
                             {/* Bottom section with progress bar */}
                             <div className="mt-4">
                                 <Link href={`/ders/${ders.id}`} className="text-sm text-primary hover:underline flex items-center">
-                                <Button variant="default">
-                                    <Play className="w-4 h-4 mr-2" />
-                                    Start Learning
-                                </Button>
+                                    <Button variant="default">
+                                        <Play className="w-4 h-4 mr-2" />
+                                        መማር  ይጀምሩ
+                                    </Button>
                                 </Link>
                             </div>
                         </div>

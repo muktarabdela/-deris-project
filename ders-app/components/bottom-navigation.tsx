@@ -10,17 +10,17 @@ export function BottomNavigation() {
 
     const navItems = [
         {
-            name: 'Home',
+            name: 'መነሻ ገፅ',
             path: '/dashboard',
             icon: <Home className="w-5 h-5" />
         },
         {
-            name: 'Leaderboard',
+            name: 'ቀዳሚዎች',
             path: '/leaderboard',
             icon: <Trophy className="w-5 h-5" />
         },
         {
-            name: 'Saved',
+            name: 'ተቀመጡ የተቀመጡ',
             path: '/saved',
             icon: <Bookmark className="w-5 h-5" />
         },
@@ -35,14 +35,14 @@ export function BottomNavigation() {
                             key={item.path}
                             href={item.path}
                             className={`flex flex-col items-center justify-center flex-1 h-full ${pathname === item.path
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                ? 'text-primary'
+                                : 'text-muted-foreground hover:text-foreground'
                                 } transition-colors`}
                         >
                             <div className="mb-1">
                                 {item.icon}
                             </div>
-                            <span className="text-xs">{item.name}</span>
+                            {/* <span className="text-xs">{item.name}</span> */}
                         </Link>
                     ))}
                 </div>

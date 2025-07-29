@@ -25,7 +25,7 @@ export default function Home() {
                 const tgUser = getTelegramUser();
 
                 if (!tgUser || typeof tgUser.id !== 'number') {
-                    setError("Unable to get Telegram user information. Please open this app within Telegram.");
+                    setError("እባኮትን መተግበሪያውን ከቴሌግራም ውስጥ በድጋሚ ይክፈቱ።");
                     setIsLoading(false);
                     return; // Stop execution
                 }
@@ -46,7 +46,7 @@ export default function Home() {
                 }, 1000);
 
             } catch (err: any) {
-                setError(err.message || "An unexpected error occurred during initialization.");
+                setError(err.message || "እባኮትን መተግበሪያውን ከቴሌግራም ውስጥ በድጋሚ ይክፈቱ።");
                 setIsLoading(false);
             }
         };
@@ -64,7 +64,7 @@ export default function Home() {
                 <div className="text-center space-y-4 max-w-md w-full p-4 bg-destructive/10 rounded-lg">
                     <h2 className="text-xl font-semibold text-destructive">Error</h2>
                     <p className="text-destructive-foreground">{error}</p>
-                    <p className="text-sm text-muted-foreground">Please try reopening the app from Telegram.</p>
+                    <p className="text-sm text-muted-foreground">እባኮትን መተግበሪያውን ከቴሌግራም ውስጥ በድጋሚ ይክፈቱ።</p>
                 </div>
             </div>
         );
@@ -123,7 +123,7 @@ export default function Home() {
                         animate={{ opacity: 1 }}
                         transition={{ delay: 0.5, duration: 1 }}
                     >
-                        Connecting to Telegram...
+                        ከቴሌግራም ጋር በመገናኘት ላይ...
                     </motion.p>
                 </motion.div>
             </div>
@@ -173,7 +173,7 @@ export default function Home() {
                             }}
                         />
                     </div>
-                    <p className="text-muted-foreground text-sm">Welcome! Redirecting...</p>
+                    <p className="text-muted-foreground text-sm">እንኳን ደህና መጡ፣ በቀጥታ እየተላከ ነው...</p>
                 </div>
 
                 <motion.p
@@ -182,7 +182,7 @@ export default function Home() {
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.5, duration: 1 }}
                 >
-                    Your Islamic learning journey begins here
+                    የእስልማናዊ ትምህርትዎ ጉዞ ከዚህ ይጀምራል
                 </motion.p>
             </motion.div>
         </div>
