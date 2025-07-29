@@ -1,0 +1,14 @@
+{
+	"Layout": {
+		"title": "ደሪስ"
+	},
+	"HomePage": {
+		"errorTitle": "ስህተት",
+		"errorDescription": "የቴሌግራም የተጠቃሚ መረጃ ማግኘት አልተቻለም። እባክዎ ይህን መተግበሪያ በቴሌግራም ውስጥ ይክፈቱ።",
+		"errorSuggestion": "እባክዎ መተግበሪያውን ከቴሌግራም እንደገና ለመክፈት ይሞክሩ።",
+		"loadingStatus": "ማረጋገጥ እና ቦታዎን ማዘጋጀት...",
+		"loadingConnection": "ከቴሌግራም ጋር በመገናኘት ላይ...",
+		"redirectingStatus": "እንኳን ደህና መጡ! በማስተላለፍ ላይ...",
+		"tagline": "የእርስዎ ኢስላማዊ የትምህርት ጉዞ እዚህ ይጀምራል"
+	}
+}

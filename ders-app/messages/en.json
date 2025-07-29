@@ -1,0 +1,14 @@
+{
+	"Layout": {
+		"title": "Deris"
+	},
+	"HomePage": {
+		"errorTitle": "Error",
+		"errorDescription": "Unable to get Telegram user information. Please open this app within Telegram.",
+		"errorSuggestion": "Please try reopening the app from Telegram.",
+		"loadingStatus": "Authenticating and preparing your space...",
+		"loadingConnection": "Connecting to Telegram...",
+		"redirectingStatus": "Welcome! Redirecting...",
+		"tagline": "Your Islamic learning journey begins here"
+	}
+}

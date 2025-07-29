@@ -1,5 +1,6 @@
 "use client";
 
+import { Button } from '@/components/ui/button';
 import { getUserByTelegramUserId } from '@/lib/services/users/userService';
 import { getTelegramUser } from '@/lib/utils/telegram';
 import { motion } from 'framer-motion';
@@ -308,16 +309,12 @@ export default function DashboardPage() {
 
                             {/* Bottom section with progress bar */}
                             <div className="mt-4">
-                                <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
-                                    <span>{ders.completedParts}/{ders.totalParts} Parts</span>
-                                    <span>{Math.round(ders.progress)}%</span>
-                                </div>
-                                <div className="w-full bg-muted rounded-full h-1.5">
-                                    <div
-                                        className="bg-primary h-1.5 rounded-full"
-                                        style={{ width: `${ders.progress}%` }}
-                                    />
-                                </div>
+                                <Link href={`/ders/${ders.id}`} className="text-sm text-primary hover:underline flex items-center">
+                                <Button variant="default">
+                                    <Play className="w-4 h-4 mr-2" />
+                                    Start Learning
+                                </Button>
+                                </Link>
                             </div>
                         </div>
                     ))}
