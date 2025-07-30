@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -23,12 +23,10 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { dersService } from '@/lib/services/ders';
 import DersFormDialog from '@/components/admin/ders-form-dialog';
-import { Category, Ders } from '@/src/generated/prisma';
-import { ustadhService } from '@/lib/services/ustadh';
-import { Ustadh } from '@/src/generated/prisma';
-import { categoryService } from '@/lib/services/category';
+import { useData } from '@/context/dataContext';
+import { DersModel } from '@/model/Ders';
 
-type DersWithRelations = Ders & {
+type DersWithRelations = DersModel & {
     ustadh: { name: string };
     category: { name: string };
     audioPartsCount: number;
@@ -36,94 +34,14 @@ type DersWithRelations = Ders & {
 
 export default function DersPage() {
     const router = useRouter();
-    const [loading, setLoading] = useState({
-        derses: true,
-        ustadhs: true,
-        categories: true
-    });
+
+    const { derses, ustadhs, categories, loading, error, refreshData } = useData();
+    console.log(derses, ustadhs, categories, error);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
-    const [derses, setDerses] = useState<DersWithRelations[]>([]);
     const [totalPages, setTotalPages] = useState(1);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [selectedDers, setSelectedDers] = useState<Ders | null>(null);
-    const [ustadhs, setUstadhs] = useState<Ustadh[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-
-    const fetchInitialData = useCallback(async () => {
-        try {
-            setLoading(prev => ({ ...prev, derses: true }));
-
-            // Fetch all data in parallel
-            const [dersData, ustadhData, categoryData] = await Promise.allSettled([
-                dersService.getAll(),
-                ustadhService.getAll(),
-                categoryService.getAll()
-            ]);
-
-            // Handle ders data
-            if (dersData.status === 'fulfilled') {
-                setDerses(dersData.value as DersWithRelations[]);
-                // Update total pages if needed
-                // setTotalPages(calculateTotalPages(dersData.value.length));
-            } else {
-                console.error('Error fetching derses:', dersData.reason);
-                toast.error('Failed to load derses');
-            }
-
-            // Handle ustadh data
-            if (ustadhData.status === 'fulfilled') {
-                setUstadhs(ustadhData.value);
-            } else {
-                console.error('Error fetching ustadhs:', ustadhData.reason);
-                toast.error('Failed to load ustadhs');
-            }
-
-            // Handle category data
-            if (categoryData.status === 'fulfilled') {
-                setCategories(categoryData.value);
-            } else {
-                console.error('Error fetching categories:', categoryData.reason);
-                toast.error('Failed to load categories');
-            }
-        } catch (error) {
-            console.error('Error in fetchInitialData:', error);
-            toast.error('An error occurred while loading data');
-        } finally {
-            setLoading(prev => ({
-                ...prev,
-                derses: false,
-                ustadhs: false,
-                categories: false
-            }));
-        }
-    }, []);
-
-    // Initial data load
-    useEffect(() => {
-        fetchInitialData();
-    }, [fetchInitialData]);
-
-    // Fetch derses when page or search term changes
-    const fetchDerses = useCallback(async () => {
-        try {
-            setLoading(prev => ({ ...prev, derses: true }));
-            const data = await dersService.getAll();
-            setDerses(data as DersWithRelations[]);
-            // Update total pages if needed
-            // setTotalPages(calculateTotalPages(data.length));
-        } catch (error) {
-            console.error('Error fetching derses:', error);
-            toast.error('Failed to load derses');
-        } finally {
-            setLoading(prev => ({ ...prev, derses: false }));
-        }
-    }, [page, searchTerm]);
-
-    // Watch for pagination/search changes
-    useEffect(() => {
-        fetchDerses();
-    }, [fetchDerses]);
+    const [selectedDers, setSelectedDers] = useState<DersModel | null>(null);
 
     const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
         setSearchTerm(e.target.value);
@@ -134,7 +52,7 @@ export default function DersPage() {
         try {
             await dersService.togglePublish(id);
             toast.success('Ders status updated');
-            fetchDerses();
+            refreshData();
         } catch (error) {
             console.error('Error updating ders status:', error);
             toast.error('Failed to update ders status');
@@ -147,14 +65,14 @@ export default function DersPage() {
         try {
             await dersService.delete(id);
             toast.success('Ders deleted successfully');
-            fetchDerses();
+            refreshData();
         } catch (error) {
             console.error('Error deleting ders:', error);
             toast.error('Failed to delete ders');
         }
     };
 
-    const handleEdit = (ders: Ders) => {
+    const handleEdit = (ders: DersModel) => {
         setSelectedDers(ders);
         setIsDialogOpen(true);
     };
@@ -162,7 +80,15 @@ export default function DersPage() {
     const handleDialogSuccess = () => {
         setIsDialogOpen(false);
         setSelectedDers(null);
-        fetchDerses();
+        refreshData();
+    };
+
+    const filteredDerses = derses?.filter((ders) =>
+        ders.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handlePageChange = (newPage: number) => {
+        setPage(newPage);
     };
 
     return (
@@ -207,7 +133,7 @@ export default function DersPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading.derses ? (
+                        {loading ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-8">
                                     <div className="flex justify-center">
@@ -215,14 +141,14 @@ export default function DersPage() {
                                     </div>
                                 </TableCell>
                             </TableRow>
-                        ) : derses?.length === 0 ? (
+                        ) : filteredDerses?.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                                     No derses found
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            derses?.map((ders) => (
+                            filteredDerses?.map((ders) => (
                                 <TableRow key={ders.id}>
                                     <TableCell className="font-medium">
                                         <div className="space-y-1">
@@ -241,7 +167,7 @@ export default function DersPage() {
                                             {ders.is_published ? 'Published' : 'Draft'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{ders.audioPartsCount || 0}</TableCell>
+                                    <TableCell>{ders.audio_parts?.length || 0}</TableCell>
                                     <TableCell>{new Date(ders.createdAt).toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>

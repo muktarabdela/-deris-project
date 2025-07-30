@@ -7,6 +7,7 @@ import { ProfileButton } from "@/components/profile-button";
 import { AuthProvider } from "@/context/authContext";
 import { AppContent } from "@/components/app-content";
 import { ConditionalLayoutWrapper } from "@/components/conditional-layout-wrapper";
+import { DataProvider } from "@/context/dataContext";
 
 export const viewport = {
     width: 'device-width',
@@ -46,11 +47,15 @@ export default function RootLayout({
                     touchAction: 'manipulation',
                 }}
             >
-                <ThemeProvider>
-                    <ConditionalLayoutWrapper>
-                        {children}
-                    </ConditionalLayoutWrapper>
-                </ThemeProvider>
+                <AuthProvider>
+                    <ThemeProvider>
+                        <DataProvider>
+                            <ConditionalLayoutWrapper>
+                                {children}
+                            </ConditionalLayoutWrapper>
+                        </DataProvider>
+                    </ThemeProvider>
+                </AuthProvider>
             </body>
         </html>
     );

@@ -1,12 +1,14 @@
+"use client";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useData } from '@/context/dataContext';
 import { Users, BookOpen, User, BarChart2 } from 'lucide-react';
 
 export default function AdminDashboard() {
-    // These would typically come from your API
+    const { users, derses, ustadhs, categories, loading, error, refreshData } = useData();
     const stats = [
-        { title: 'Total Users', value: '1,234', icon: Users },
-        { title: 'Active Ustadhs', value: '42', icon: User },
-        { title: 'Total Ders', value: '156', icon: BookOpen },
+        { title: 'Total Users', value: users.length.toString(), icon: Users },
+        { title: 'Active Ustadhs', value: ustadhs.length.toString(), icon: User },
+        { title: 'Total Ders', value: derses.length.toString(), icon: BookOpen },
         { title: 'Avg. Completion', value: '78%', icon: BarChart2 },
     ];
 

@@ -25,7 +25,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-import { Ustadh, ustadhService } from "@/lib/services/ustadh";
+import { ustadhService } from "@/lib/services/ustadh";
+import { UstadhModel } from "@/model/Ustadh";
 
 const formSchema = z.object({
     name: z.string().min(2, {
@@ -33,14 +34,14 @@ const formSchema = z.object({
     }),
     bio: z.string().optional(),
     photo_url: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
+    createdAt: z.date().optional(),
+    updatedAt: z.date().optional(),
 });
 
 interface UstadhFormDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    ustadh?: Ustadh | null;
+    ustadh?: UstadhModel | null;
     onSuccess: () => void;
 }
 
@@ -58,8 +59,8 @@ export function UstadhFormDialog({
             name: "",
             bio: "",
             photo_url: "",
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: new Date(),
+            updatedAt: new Date(),
         },
     });
 
@@ -69,16 +70,16 @@ export function UstadhFormDialog({
                 name: ustadh.name,
                 bio: ustadh.bio || "",
                 photo_url: ustadh.photo_url || "",
-                createdAt: ustadh.createdAt || new Date().toISOString(),
-                updatedAt: ustadh.updatedAt || new Date().toISOString(),
+                createdAt: ustadh.createdAt || new Date(),
+                updatedAt: ustadh.updatedAt || new Date(),
             });
         } else {
             form.reset({
                 name: "",
                 bio: "",
                 photo_url: "",
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
+                createdAt: new Date(),
+                updatedAt: new Date(),
             });
         }
     }, [ustadh, open, form]);

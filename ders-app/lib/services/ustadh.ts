@@ -1,22 +1,14 @@
 import { supabase } from '@/lib/supabase';
+import { UstadhModel } from '@/model/Ustadh';
 
-export type Ustadh = {
-    id: string;
-    name: string;
-    bio?: string | null;
-    photo_url?: string | null;
-    createdAt?: string;
-    updatedAt?: string;
-};
-
-export type CreateUstadhInput = Omit<Ustadh, 'id' | 'createdAt' | 'updatedAt'>;
+export type CreateUstadhInput = Omit<UstadhModel, 'id' | 'createdAt' | 'updatedAt' | 'derses'>;
 export type UpdateUstadhInput = Partial<CreateUstadhInput>;
 
 const TABLE_NAME = 'ustadhs';
 
 export const ustadhService = {
     // Create a new ustadh
-    async create(ustadh: CreateUstadhInput): Promise<Ustadh> {
+    async create(ustadh: CreateUstadhInput): Promise<UstadhModel> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .insert(ustadh)
@@ -32,7 +24,7 @@ export const ustadhService = {
     },
 
     // Get all ustadhs
-    async getAll(): Promise<Ustadh[]> {
+    async getAll(): Promise<UstadhModel[]> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')
@@ -47,7 +39,7 @@ export const ustadhService = {
     },
 
     // Get a single ustadh by ID
-    async getById(id: string): Promise<Ustadh | null> {
+    async getById(id: string): Promise<UstadhModel | null> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')
@@ -66,7 +58,7 @@ export const ustadhService = {
     },
 
     // Update an ustadh
-    async update(id: string, updates: UpdateUstadhInput): Promise<Ustadh> {
+    async update(id: string, updates: UpdateUstadhInput): Promise<UstadhModel> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .update({
@@ -99,7 +91,7 @@ export const ustadhService = {
     },
 
     // Search ustadhs by name
-    async search(query: string): Promise<Ustadh[]> {
+    async search(query: string): Promise<UstadhModel[]> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')

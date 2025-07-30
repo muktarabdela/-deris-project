@@ -20,53 +20,26 @@ import {
 } from '@/components/ui/dropdown-menu';
 import Image from 'next/image';
 import { toast } from 'sonner';
-import { ustadhService, type Ustadh } from '@/lib/services/ustadh';
+import { ustadhService } from '@/lib/services/ustadh';
 import { format } from 'date-fns';
 import { UstadhFormDialog } from '@/components/admin/ustadh-form-dialog';
+import { UstadhModel } from '@/model/Ustadh';
+import { useData } from '@/context/dataContext';
 
 // Extend the Ustadh type to include dersCount for the UI
-interface UstadhWithDersCount extends Ustadh {
+interface UstadhWithDersCount extends UstadhModel {
     dersCount: number;
 }
 
 export default function UstadhsPage() {
-    const [ustadhs, setUstadhs] = useState<UstadhWithDersCount[]>([]);
+    const { ustadhs, error, refreshData } = useData();
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingUstadh, setEditingUstadh] = useState<Ustadh | null>(null);
+    const [editingUstadh, setEditingUstadh] = useState<UstadhModel | null>(null);
 
 
-    useEffect(() => {
-        const fetchUstadhs = async () => {
-            try {
-                setIsLoading(true);
-                let data;
-                if (searchQuery.trim()) {
-                    data = await ustadhService.search(searchQuery);
-                } else {
-                    data = await ustadhService.getAll();
-                }
-                setUstadhs(data.map(ustadh => ({
-                    ...ustadh,
-                    dersCount: 0,
-                })));
-            } catch (error) {
-                console.error('Error fetching ustadhs:', error);
-                toast.error('Failed to load ustadhs');
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
-        // Add debounce to search
-        const timer = setTimeout(() => {
-            fetchUstadhs();
-        }, 300);
-
-        return () => clearTimeout(timer);
-    }, [searchQuery]);
 
     const handleDelete = async (id: string) => {
         if (!confirm('Are you sure you want to delete this ustadh?')) return;
@@ -74,7 +47,7 @@ export default function UstadhsPage() {
         try {
             setIsDeleting(id);
             await ustadhService.delete(id);
-            setUstadhs(prev => prev.filter(u => u.id !== id));
+            refreshData();
             toast.success('Ustadh deleted successfully');
         } catch (error) {
             console.error('Error deleting ustadh:', error);
@@ -84,7 +57,7 @@ export default function UstadhsPage() {
         }
     };
 
-    const handleEdit = (ustadh: Ustadh) => {
+    const handleEdit = (ustadh: UstadhModel) => {
         setEditingUstadh(ustadh);
         setIsDialogOpen(true);
     };
@@ -97,11 +70,7 @@ export default function UstadhsPage() {
     const handleSuccess = async () => {
         try {
             setIsLoading(true);
-            const data = await ustadhService.getAll();
-            setUstadhs(data.map(ustadh => ({
-                ...ustadh,
-                dersCount: 0, // Keep the dersCount mapping
-            })));
+            refreshData();
             setIsDialogOpen(false);
             setEditingUstadh(null);
         } catch (error) {
@@ -119,6 +88,10 @@ export default function UstadhsPage() {
             </div>
         );
     }
+
+    const filteredUstadhs = ustadhs?.filter((ustadh) =>
+        ustadh.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
     return (
         <div className="space-y-6">
@@ -157,14 +130,14 @@ export default function UstadhsPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {ustadhs.length === 0 ? (
+                        {filteredUstadhs?.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
                                     {searchQuery ? 'No matching ustadhs found' : 'No ustadhs found'}
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            ustadhs.map((ustadh) => (
+                            filteredUstadhs?.map((ustadh) => (
                                 <TableRow key={ustadh.id}>
                                     <TableCell className="font-medium">
                                         <div className="flex items-center space-x-3">

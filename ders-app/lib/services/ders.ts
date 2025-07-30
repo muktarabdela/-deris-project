@@ -1,8 +1,7 @@
-import { prisma } from '@/lib/prisma';
-import { Ders } from '@/src/generated/prisma';
 import { supabase } from '../supabase';
+import { DersModel } from '@/model/Ders';
 
-export type CreateDersInput = Omit<Ders, 'id' | 'createdAt' | 'updatedAt' | 'ustadh' | 'category'> & {
+export type CreateDersInput = Omit<DersModel, 'id' | 'createdAt' | 'updatedAt' | 'ustadh' | 'category'> & {
     ustadh_id: string;
     category_id: string;
 };
@@ -11,7 +10,7 @@ export type UpdateDersInput = Partial<CreateDersInput>;
 
 export const dersService = {
     // Create a new ders
-    async create(data: CreateDersInput): Promise<Ders> {
+    async create(data: CreateDersInput): Promise<DersModel> {
         const { data: createdDers, error } = await supabase
             .from('derses')
             .insert({
@@ -31,7 +30,7 @@ export const dersService = {
     },
 
     // Get a single ders by ID
-    async getById(id: string): Promise<Ders | null> {
+    async getById(id: string): Promise<DersModel | null> {
         const { data, error } = await supabase
             .from('derses')
             .select('*')
@@ -50,7 +49,7 @@ export const dersService = {
     },
 
     // Get all derses with pagination
-    async getAll(): Promise<Ders[]> {
+    async getAll(): Promise<DersModel[]> {
         const { data, error } = await supabase
             .from('derses')
             .select('*')
@@ -65,7 +64,7 @@ export const dersService = {
     },
 
     // Update a ders
-    async update(id: string, data: UpdateDersInput): Promise<Ders> {
+    async update(id: string, data: UpdateDersInput): Promise<DersModel> {
         const { data: updatedDers, error } = await supabase
             .from('derses')
             .update({
@@ -85,7 +84,7 @@ export const dersService = {
     },
 
     // Delete a ders
-    async delete(id: string): Promise<Ders> {
+    async delete(id: string): Promise<DersModel> {
         const { data: deletedDers, error } = await supabase
             .from('derses')
             .delete()
@@ -106,7 +105,7 @@ export const dersService = {
     },
 
     // Toggle publish status
-    async togglePublish(id: string): Promise<Ders> {
+    async togglePublish(id: string): Promise<DersModel> {
         // First, get the current ders to check its current is_published status
         const { data: currentDers, error: fetchError } = await supabase
             .from('derses')

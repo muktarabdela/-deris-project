@@ -1,20 +1,13 @@
 import { supabase } from '@/lib/supabase';
-
-export type Category = {
-    id: string;
-    name: string;
-    createdAt: string;
-    updatedAt: string;
-};
-
-export type CreateCategoryInput = Omit<Category, 'id' | 'createdAt' | 'updatedAt'>;
+import { CategoryModel } from '@/model/Category';
+export type CreateCategoryInput = Omit<CategoryModel, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateCategoryInput = Partial<CreateCategoryInput>;
 
 const TABLE_NAME = 'categories';
 
 export const categoryService = {
     // Create a new category
-    async create(category: CreateCategoryInput): Promise<Category> {
+    async create(category: CreateCategoryInput): Promise<CategoryModel> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .insert(category)
@@ -30,7 +23,7 @@ export const categoryService = {
     },
 
     // Get all categories
-    async getAll(): Promise<Category[]> {
+    async getAll(): Promise<CategoryModel[]> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')
@@ -45,7 +38,7 @@ export const categoryService = {
     },
 
     // Get a single category by ID
-    async getById(id: string): Promise<Category | null> {
+    async getById(id: string): Promise<CategoryModel | null> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')
@@ -64,7 +57,7 @@ export const categoryService = {
     },
 
     // Update a category
-    async update(id: string, updates: UpdateCategoryInput): Promise<Category> {
+    async update(id: string, updates: UpdateCategoryInput): Promise<CategoryModel> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .update({
@@ -97,7 +90,7 @@ export const categoryService = {
     },
 
     // Search categories by name
-    async search(query: string): Promise<Category[]> {
+    async search(query: string): Promise<CategoryModel[]> {
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .select('*')

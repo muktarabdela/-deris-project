@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getTelegramUser } from '@/lib/utils/telegram';
-import { getUserByTelegramUserId } from '@/lib/services/userService';
+import { userService } from '@/lib/services/user';
 
 interface UserProfile {
     id: string;
@@ -33,7 +33,7 @@ export default function ProfilePage() {
         if (tgUser) {
             const getUserProfile = async () => {
                 try {
-                    const response = await getUserByTelegramUserId(tgUser?.id);
+                    const response = await userService.getUserByTelegramUserId(tgUser?.id);
                     console.log("response", response);
 
                     if (response) {

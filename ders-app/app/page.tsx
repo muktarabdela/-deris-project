@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 // Adjust your import paths as needed
 import { loadTelegramWebApp, getTelegramUser, expandTelegramWebApp } from '@/lib/utils/telegram';
-import { upsertTelegramUser } from '@/lib/services/userService';
+import { userService } from '@/lib/services/user';
 
 export default function Home() {
     const router = useRouter();
@@ -37,7 +37,7 @@ export default function Home() {
                     photo_url: tgUser.photo_url || "",
                 };
 
-                await upsertTelegramUser(userDataToStore);
+                await userService.upsertTelegramUser(userDataToStore);
 
                 setIsLoading(false);
 

@@ -36,7 +36,10 @@ import { toast } from 'sonner';
 import { dersService } from '@/lib/services/ders';
 import { ustadhService } from '@/lib/services/ustadh';
 import { categoryService } from '@/lib/services/category';
-import { Ders, Ustadh, Category } from '@/src/generated/prisma';
+import { DersModel } from '@/model/Ders';
+import { UstadhModel } from '@/model/Ustadh';
+import { CategoryModel } from '@/model/Category';
+import { useData } from '@/context/dataContext';
 
 const formSchema = z.object({
     title: z.string().min(1, 'Title is required'),
@@ -47,50 +50,23 @@ const formSchema = z.object({
     order: z.coerce.number().int().min(0, 'Order must be a positive number'),
     ustadh_id: z.string().min(1, 'Ustadh is required'),
     category_id: z.string().min(1, 'Category is required'),
-    createdAt: z.string().optional(),
-    updatedAt: z.string().optional(),
+    createdAt: z.date().optional(),
+    updatedAt: z.date().optional(),
 });
 
-type DersFormValues = {
-    title: string;
-    description: string;
-    is_published: boolean;
-    order: number;
-    ustadh_id: string;
-    category_id: string;
-    thumbnail_url?: string;
-    book_pdf_url?: string;
-};
 
 interface DersFormDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    ders?: Ders | null;
+    ders?: DersModel | null;
     onSuccess?: () => void;
 }
 
 export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: DersFormDialogProps) {
+    const { derses, ustadhs, categories, error, refreshData } = useData();
     const [loading, setLoading] = useState(false);
-    const [ustadhs, setUstadhs] = useState<Ustadh[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
 
-    useEffect(() => {
-        const fetchUstadhsAndCategories = async () => {
-            const [fetchedUstadhs, fetchedCategories] = await Promise.all([
-                ustadhService.getAll(),
-                categoryService.getAll()
-            ]);
-            setUstadhs(fetchedUstadhs);
-            setCategories(fetchedCategories);
-        };
-        fetchUstadhsAndCategories();
-    }, []);
-
-    console.log("ustadhsData", ustadhs);
-    console.log("categoriesData", categories);
-
-
-    const form = useForm<DersFormValues>({
+    const form = useForm<DersModel>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             title: '',
@@ -101,6 +77,8 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
             order: 0,
             ustadh_id: '',
             category_id: '',
+            createdAt: new Date(),
+            updatedAt: new Date(),
         },
     });
 
@@ -116,6 +94,8 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                 order: ders.order,
                 ustadh_id: ders.ustadh_id,
                 category_id: ders.category_id,
+                createdAt: ders.createdAt,
+                updatedAt: ders.updatedAt,
             });
         } else {
             form.reset({
@@ -127,11 +107,14 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                 order: 0,
                 ustadh_id: '',
                 category_id: '',
+                createdAt: new Date(),
+                updatedAt: new Date(),
             });
         }
     }, [ders, open]);
 
-    const onSubmit = async (values: DersFormValues) => {
+    const onSubmit = async (values: DersModel) => {
+        console.log("values");
         try {
             setLoading(true);
 
