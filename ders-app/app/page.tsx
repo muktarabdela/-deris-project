@@ -7,11 +7,14 @@ import { motion } from 'framer-motion';
 // Adjust your import paths as needed
 import { loadTelegramWebApp, getTelegramUser, expandTelegramWebApp } from '@/lib/utils/telegram';
 import { userService } from '@/lib/services/user';
+import { useData } from '@/context/dataContext';
+
 
 export default function Home() {
     const router = useRouter();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const { users, refreshData } = useData();
 
     useEffect(() => {
         let timer: NodeJS.Timeout | null = null;
@@ -27,17 +30,31 @@ export default function Home() {
                 if (!tgUser || typeof tgUser.id !== 'number') {
                     setError("እባኮትን መተግበሪያውን ከቴሌግራም ውስጥ በድጋሚ ይክፈቱ።");
                     setIsLoading(false);
-                    return; // Stop execution
+                    return;
                 }
 
-                const userDataToStore = {
-                    id: tgUser.id,
-                    first_name: tgUser.first_name || "",
-                    username: tgUser.username || "",
-                    photo_url: tgUser.photo_url || "",
-                };
+                // First, check if user exists and get current data
+                let user = users?.find((user) => Number(user.telegram_user_id) === tgUser.id);
 
-                await userService.upsertTelegramUser(userDataToStore);
+                // If user doesn't exist, create them
+                if (!user) {
+                    user = await userService.upsertTelegramUser({
+                        id: tgUser.id,
+                        first_name: tgUser.first_name || "",
+                        username: tgUser.username || "",
+                        photo_url: tgUser.photo_url || "",
+                    });
+                    refreshData();
+                } else {
+                    // If user exists, update only if needed
+                    await userService.updateUserIfNeeded({
+                        id: tgUser.id,
+                        first_name: tgUser.first_name || "",
+                        username: tgUser.username || "",
+                        photo_url: tgUser.photo_url || "",
+                    });
+                    refreshData();
+                }
 
                 setIsLoading(false);
 
@@ -114,7 +131,7 @@ export default function Home() {
                                 }}
                             />
                         </div>
-                        <p className="text-muted-foreground text-sm">Authenticating and preparing your space...</p>
+                        <p className="text-muted-foreground text-sm">በመገናኘት ላይ...</p>
                     </div>
 
                     <motion.p
@@ -175,15 +192,6 @@ export default function Home() {
                     </div>
                     <p className="text-muted-foreground text-sm">እንኳን ደህና መጡ፣ በቀጥታ እየተላከ ነው...</p>
                 </div>
-
-                <motion.p
-                    className="text-xs text-muted-foreground/50 mt-8"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5, duration: 1 }}
-                >
-                    የእስልማናዊ ትምህርትዎ ጉዞ ከዚህ ይጀምራል
-                </motion.p>
             </motion.div>
         </div>
     );

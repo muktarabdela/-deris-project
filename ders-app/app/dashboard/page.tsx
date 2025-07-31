@@ -11,6 +11,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { JSX, useEffect, useState } from 'react';
+import { Loading } from '@/components/loading';
 
 interface UserProfile {
     id: string;
@@ -33,7 +34,7 @@ type Ders = {
 
 
 export default function DashboardPage() {
-    const { derses, error, refreshData, users, categories } = useData();
+    const { derses, error, refreshData, users, categories, loading } = useData();
 
     const tgUser = getTelegramUser();
 
@@ -60,6 +61,12 @@ export default function DashboardPage() {
         category: 'Tajweed',
         isPopular: true,
     };
+
+    if (loading || !user) {
+        return (
+            <Loading />
+        );
+    }
 
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">

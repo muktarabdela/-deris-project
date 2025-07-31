@@ -18,7 +18,6 @@ export const userService = {
         photo_url?: string;
     }) {
         try {
-            console.log("Upserting user:", { id, first_name, username, photo_url });
             const telegramUserIdString = id.toString();
 
             // FIX: Ensure the table name exactly matches your database.
@@ -39,18 +38,14 @@ export const userService = {
 
             if (error) {
                 console.error("Supabase Upsert Error:", error);
-                // This is the line causing the "undefined" message if error.message is empty
                 throw new Error(`User upsert failed: ${error.message}`);
             }
-
-            console.log("User upsert successful:", data);
             return data;
         } catch (err) {
             console.error("Error during user upsert:", err);
             throw err;
         }
     },
-
     // create a function to get user by id
     async getUserByTelegramUserId(telegramUserId: number) {
         try {
@@ -114,5 +109,64 @@ export const userService = {
             throw error;
         }
     },
-}
+    async updateUserIfNeeded({
+        id,
+        first_name,
+        username,
+        photo_url,
+    }: {
+        id: number;
+        first_name: string;
+        username?: string;
+        photo_url?: string;
+    }) {
+        try {
+            // First get the current user data
+            const currentUser = await this.getUserByTelegramUserId(id);
 
+            // If no changes detected, return early
+            if (currentUser &&
+                currentUser.first_name === first_name &&
+                currentUser.username === username &&
+                currentUser.profile_picture_url === photo_url) {
+                return { data: currentUser, updated: false };
+            }
+
+            // Only update what's necessary
+            const updates: Record<string, any> = {
+                updatedAt: new Date()
+            };
+
+            if (first_name && currentUser?.first_name !== first_name) {
+                updates.first_name = first_name;
+            }
+
+            if (username !== undefined && currentUser?.username !== username) {
+                updates.username = username;
+            }
+
+            if (photo_url !== undefined && currentUser?.profile_picture_url !== photo_url) {
+                // Handle photo URL updates - you might want to store multiple photos in an array
+                const photoArray = currentUser?.photos || [];
+                if (photo_url && !photoArray.includes(photo_url)) {
+                    updates.photos = [...new Set([...photoArray, photo_url])];
+                }
+                updates.profile_picture_url = photo_url;
+            }
+
+            const { data, error } = await supabase
+                .from(TABLE_NAME)
+                .update(updates)
+                .eq('telegram_user_id', id.toString())
+                .select()
+                .single();
+
+            if (error) throw error;
+
+            return { data, updated: true };
+        } catch (error) {
+            console.error('Error updating user:', error);
+            throw error;
+        }
+    },
+}

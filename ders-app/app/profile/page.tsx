@@ -8,19 +8,17 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { getTelegramUser } from '@/lib/utils/telegram';
 import { userService } from '@/lib/services/user';
+import { useData } from '@/context/dataContext';
+import { Loading } from '@/components/loading';
 
-interface UserProfile {
-    id: string;
-    first_name: string;
-    username: string;
-    profile_picture_url: string;
-}
 
 export default function ProfilePage() {
+    const { users, refreshData, loading } = useData();
     const tgUser = getTelegramUser();
 
+    const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
+
     const router = useRouter();
-    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
     // Redirect to login if not authenticated
     useEffect(() => {
@@ -29,41 +27,13 @@ export default function ProfilePage() {
         }
     }, [tgUser, router]);
 
-    useEffect(() => {
-        if (tgUser) {
-            const getUserProfile = async () => {
-                try {
-                    const response = await userService.getUserByTelegramUserId(tgUser?.id);
-                    console.log("response", response);
-
-                    if (response) {
-                        setUserProfile({
-                            id: response.id,
-                            first_name: response.first_name,
-                            username: response.username,
-                            profile_picture_url: response.profile_picture_url,
-                        });
-                    } else {
-                        router.push('/dashboard');
-                    }
-                } catch (error) {
-                    console.error('Error fetching user:', error);
-                }
-            };
-
-            getUserProfile();
-        }
-    }, [tgUser, router]);
-
-    if (!userProfile) {
+    if (loading || !user) {
         return (
-            <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
-                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-            </div>
+            <Loading />
         );
     }
 
-    if (!userProfile) {
+    if (!user) {
         return (
             <div className="flex items-center justify-center min-h-[calc(100vh-64px)]">
                 <p>Not authenticated</p>
@@ -72,15 +42,15 @@ export default function ProfilePage() {
     }
 
     const updatePreference = async (key: string, value: any) => {
-        if (!userProfile) return;
+        if (!user) return;
 
         const updatedUser = {
-            ...userProfile,
+            ...user,
             [key]: value
         };
 
         try {
-            const response = await fetch('/api/profiles/' + userProfile.id, {
+            const response = await fetch('/api/profiles/' + user.id, {
                 method: 'PATCH',
                 headers: {
                     'Content-Type': 'application/json',
@@ -89,10 +59,7 @@ export default function ProfilePage() {
             });
 
             if (response.ok) {
-                setUserProfile({
-                    ...userProfile,
-                    [key]: value
-                });
+                refreshData();
             }
         } catch (error) {
             console.error('Error updating preferences:', error);
@@ -105,10 +72,10 @@ export default function ProfilePage() {
             <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">
                 <div className="flex flex-col items-center space-y-4">
                     <div className="relative">
-                        {userProfile.profile_picture_url ? (
+                        {user.profile_picture_url ? (
                             <img
-                                src={userProfile.profile_picture_url}
-                                alt={userProfile.first_name || 'User'}
+                                src={user.profile_picture_url}
+                                alt={user.first_name || 'User'}
                                 className="h-20 w-20 rounded-full object-cover border-4 border-accent"
                             />
                         ) : (
@@ -119,9 +86,9 @@ export default function ProfilePage() {
                     </div>
 
                     <div className="text-center space-y-1">
-                        <h2 className="text-xl font-semibold">{userProfile.first_name || 'User'}</h2>
-                        {userProfile.username && (
-                            <p className="text-muted-foreground text-sm">@{userProfile.username}</p>
+                        <h2 className="text-xl font-semibold">{user.first_name || 'User'}</h2>
+                        {user.username && (
+                            <p className="text-muted-foreground text-sm">@{user.username}</p>
                         )}
 
                         {/* Streak Counter */}
@@ -148,7 +115,7 @@ export default function ProfilePage() {
                         </div>
                         <Switch
                             id="dark-mode"
-                            checked={userProfile.preferences?.dark_mode || false}
+                            checked={user.preferences?.dark_mode || false}
                             onCheckedChange={(checked) => updatePreference('dark_mode', checked)}
                         />
                     </div>
@@ -160,7 +127,7 @@ export default function ProfilePage() {
                         </div>
                         <Switch
                             id="notifications"
-                            checked={userProfile.preferences?.notifications !== false}
+                            checked={user.preferences?.notifications !== false}
                             onCheckedChange={(checked) => updatePreference('notifications', checked)}
                         />
                     </div>
@@ -172,7 +139,7 @@ export default function ProfilePage() {
                         </div>
                         <select
                             id="language"
-                            value={userProfile.preferences?.language || 'en'}
+                            value={user.preferences?.language || 'en'}
                             onChange={(e) => updatePreference('language', e.target.value)}
                             className="bg-background border rounded px-2 py-1 text-sm"
                         >
@@ -187,10 +154,10 @@ export default function ProfilePage() {
             {/* Telegram Integration */}
             <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">
                 <h3 className="font-medium">Telegram Integration</h3>
-                {userProfile.telegram_username ? (
+                {user.telegram_username ? (
                     <div className="flex items-center justify-between">
                         <div className="text-sm text-muted-foreground">
-                            Connected as @{userProfile.telegram_username}
+                            Connected as @{user.telegram_username}
                         </div>
                         <Button variant="outline" size="sm">
                             Change
