@@ -11,6 +11,7 @@ const navItems = [
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Ustadhs', href: '/admin/ustadhs', icon: User },
     { name: 'Ders', href: '/admin/ders', icon: BookOpen },
+    { name: 'Categories', href: '/admin/category', icon: BookOpen },
 ];
 
 interface SidebarProps {
