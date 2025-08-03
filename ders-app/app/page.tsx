@@ -59,7 +59,7 @@ export default function Home() {
                 setIsLoading(false);
 
                 timer = setTimeout(() => {
-                    router.push('/dashboard');
+                    router.push('/onboarding');
                 }, 1000);
 
             } catch (err: any) {
