@@ -26,16 +26,12 @@ import DersFormDialog from '@/components/admin/ders-form-dialog';
 import { useData } from '@/context/dataContext';
 import { DersModel } from '@/model/Ders';
 
-type DersWithRelations = DersModel & {
-    ustadh: { name: string };
-    category: { name: string };
-    audioPartsCount: number;
-};
+
 
 export default function DersPage() {
     const router = useRouter();
 
-    const { derses, ustadhs, categories, loading, error, refreshData } = useData();
+    const { derses, ustadhs, categories, loading, error, refreshData, audioParts } = useData();
     console.log(derses, ustadhs, categories, error);
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(1);
@@ -167,7 +163,7 @@ export default function DersPage() {
                                             {ders.is_published ? 'Published' : 'Draft'}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell>{ders.audio_parts?.length || 0}</TableCell>
+                                    <TableCell>{audioParts?.filter((part) => part.ders_id === ders.id).length || 0}</TableCell>
                                     <TableCell>{new Date(ders.createdAt).toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
