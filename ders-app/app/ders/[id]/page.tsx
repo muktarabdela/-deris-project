@@ -11,7 +11,7 @@ import { AudioPlayerWithQuiz } from '@/components/audio-player';
 
 
 export default function DersDetailsPage() {
-    const { derses, error, refreshData, users, categories, loading, audioParts } = useData();
+    const { derses, error, refreshData, users, userAudioProgress, userDersProgress, loading, audioParts, categories } = useData();
     const params = useParams();
     const ders = derses?.find((ders) => ders.id === params.id);
     const [selectedAudioPart, setSelectedAudioPart] = useState<AudioPartModel | null>(null);
@@ -27,7 +27,7 @@ export default function DersDetailsPage() {
         );
     }
 
-    const progressPercentage = Math.round((ders.completedParts / ders.totalParts) * 100);
+    const progressPercentage = Math.round((userAudioProgress?.filter((progress) => progress.audio_part_id === ders.id).length || 0) * 100);
 
     const handlePlayAudio = (audioPart: AudioPartModel) => {
         // Only allow playing if a telegram_file_id is present
@@ -64,7 +64,7 @@ export default function DersDetailsPage() {
             >
                 <div className="flex items-center gap-2 mb-2">
                     <span className="text-sm font-medium px-3 py-1 bg-primary/10 text-primary rounded-full">
-                        {ders.category}
+                        {categories?.find((category) => category.id === ders.category_id)?.name}
                     </span>
                     <span className="text-sm text-muted-foreground">
                         {new Date(ders.updatedAt).toLocaleDateString()}
@@ -84,7 +84,7 @@ export default function DersDetailsPage() {
                 <div className="flex justify-between items-center mb-2">
                     <h2 className="text-lg font-semibold text-foreground">Your Progress</h2>
                     <span className="text-sm text-muted-foreground">
-                        {ders.completedParts} of {ders.totalParts} parts
+                        {userAudioProgress?.filter((progress) => progress.audio_part_id === ders.id).length || 0} of {audioParts?.length || 0} parts
                     </span>
                 </div>
                 <div className="w-full bg-muted rounded-full h-3">
@@ -96,7 +96,7 @@ export default function DersDetailsPage() {
             </motion.div>
 
             {/* PDF Preview */}
-            {ders.pdfUrl && (
+            {ders.book_pdf_url && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
