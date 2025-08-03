@@ -1,7 +1,7 @@
 import { supabase } from '@/lib/supabase';
 import { UstadhModel } from '@/model/Ustadh';
 
-export type CreateUstadhInput = Omit<UstadhModel, 'id' | 'createdAt' | 'updatedAt' | 'derses'>;
+export type CreateUstadhInput = Omit<UstadhModel, 'id' | 'createdAt' | 'updatedAt'>;
 export type UpdateUstadhInput = Partial<CreateUstadhInput>;
 
 const TABLE_NAME = 'ustadhs';

@@ -9,12 +9,21 @@ import { UstadhModel } from '@/model/Ustadh';
 import { CategoryModel } from '@/model/Category';
 import { UserModel } from '@/model/user';
 import { userService } from '@/lib/services/user';
+import { AudioPartModel } from '@/model/AudioPart';
+import { audioPartService } from '@/lib/services/audio-part';
+import { QuizModel } from '@/model/Quiz';
+import { quizService } from '@/lib/services/quiz';
+import { QuizQuestionModel } from '@/model/QuizQuestion';
+import { quizQuestionService } from '@/lib/services/quiz-questions';
 
 type DataContextType = {
     derses: DersModel[];
     ustadhs: UstadhModel[];
     categories: CategoryModel[];
     users: UserModel[];
+    audioParts: AudioPartModel[];
+    quizzes: QuizModel[];
+    quizQuestions: QuizQuestionModel[];
     loading: boolean;
     error: string | null;
     refreshData: () => Promise<void>;
@@ -27,6 +36,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [derses, setDerses] = useState<DersModel[]>([]);
     const [ustadhs, setUstadhs] = useState<UstadhModel[]>([]);
     const [categories, setCategories] = useState<CategoryModel[]>([]);
+    const [audioParts, setAudioParts] = useState<AudioPartModel[]>([]);
+    const [quizzes, setQuizzes] = useState<QuizModel[]>([]);
+    const [quizQuestions, setQuizQuestions] = useState<QuizQuestionModel[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -36,17 +48,23 @@ export function DataProvider({ children }: { children: ReactNode }) {
             setError(null);
 
             // Fetch all data in parallel
-            const [dersesData, ustadhsData, categoriesData, usersData] = await Promise.all([
+            const [dersesData, ustadhsData, categoriesData, usersData, audioPartsData, quizzesData, quizQuestionsData] = await Promise.all([
                 dersService.getAll(),
                 ustadhService.getAll(),
                 categoryService.getAll(),
                 userService.getAll(),
+                audioPartService.getAll(),
+                quizService.getAll(),
+                quizQuestionService.getAll(),
             ]);
 
             setDerses(dersesData);
             setUstadhs(ustadhsData);
             setCategories(categoriesData);
             setUsers(usersData);
+            setAudioParts(audioPartsData);
+            setQuizzes(quizzesData);
+            setQuizQuestions(quizQuestionsData);
         } catch (err) {
             console.error('Error fetching data:', err);
             setError('Failed to fetch data. Please try again later.');
@@ -66,6 +84,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 ustadhs,
                 categories,
                 users,
+                audioParts,
+                quizzes,
+                quizQuestions,
                 loading,
                 error,
                 refreshData: fetchAllData,

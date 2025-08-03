@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Users, BookOpen, User, X, Menu } from 'lucide-react';
+import { Home, Users, BookOpen, User, X, Menu, FileAudio, Book } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
@@ -11,6 +11,9 @@ const navItems = [
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Ustadhs', href: '/admin/ustadhs', icon: User },
     { name: 'Ders', href: '/admin/ders', icon: BookOpen },
+    { name: 'Audio Parts', href: '/admin/audio-part', icon: FileAudio },
+    { name: 'Quizzes', href: '/admin/quiz', icon: BookOpen },
+    { name: 'Quiz Questions', href: '/admin/quiz-question', icon: BookOpen },
     { name: 'Categories', href: '/admin/category', icon: BookOpen },
 ];
 

@@ -1,10 +1,8 @@
-// src/components/admin/ustadhs/ustadh-form-dialog.tsx
+// src/components/admin/ustadh-form-dialog.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
     Dialog,
     DialogContent,
@@ -28,15 +26,6 @@ import { Loader2 } from "lucide-react";
 import { ustadhService } from "@/lib/services/ustadh";
 import { UstadhModel } from "@/model/Ustadh";
 
-const formSchema = z.object({
-    name: z.string().min(2, {
-        message: "Name must be at least 2 characters.",
-    }),
-    bio: z.string().optional(),
-    photo_url: z.string().url("Please enter a valid URL").optional().or(z.literal("")),
-    createdAt: z.date().optional(),
-    updatedAt: z.date().optional(),
-});
 
 interface UstadhFormDialogProps {
     open: boolean;
@@ -52,17 +41,30 @@ export function UstadhFormDialog({
     onSuccess,
 }: UstadhFormDialogProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<UstadhModel>({
         defaultValues: {
             name: "",
             bio: "",
             photo_url: "",
-            createdAt: new Date(),
-            updatedAt: new Date(),
         },
     });
+
+    const validateForm = (data: UstadhModel) => {
+        console.log(data);
+        const errors: Record<string, string> = {};
+
+        if (!data.name || data.name.trim().length < 2) {
+            errors.name = "Name must be at least 2 characters";
+        }
+        if (!data.bio || data.bio.trim() === '') {
+            errors.bio = "Bio is required";
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     useEffect(() => {
         if (ustadh) {
@@ -70,39 +72,45 @@ export function UstadhFormDialog({
                 name: ustadh.name,
                 bio: ustadh.bio || "",
                 photo_url: ustadh.photo_url || "",
-                createdAt: ustadh.createdAt || new Date(),
-                updatedAt: ustadh.updatedAt || new Date(),
             });
         } else {
             form.reset({
                 name: "",
                 bio: "",
                 photo_url: "",
-                createdAt: new Date(),
-                updatedAt: new Date(),
             });
         }
+        setFormErrors({});
     }, [ustadh, open, form]);
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(data: UstadhModel) {
+        if (!validateForm(data)) {
+            return;
+        }
+
         try {
             setIsSubmitting(true);
+            const now = new Date();
+            const ustadhData = {
+                ...data,
+                createdAt: now,
+                updatedAt: now
+            };
 
             if (ustadh) {
-                // Update existing ustadh
-                await ustadhService.update(ustadh.id, values);
-                toast.success("Ustadh updated successfully");
+                // For updates, we don't want to modify the createdAt field
+                const { createdAt, ...updateData } = ustadhData;
+                await ustadhService.update(ustadh.id, updateData);
             } else {
-                // Create new ustadh
-                await ustadhService.create(values);
-                toast.success("Ustadh created successfully");
+                await ustadhService.create(ustadhData);
             }
 
-            onOpenChange(false);
             onSuccess();
+            toast.success(`Ustadh ${ustadh ? 'updated' : 'created'} successfully`);
+            onOpenChange(false);
         } catch (error) {
-            console.error("Error saving ustadh:", error);
-            toast.error("Failed to save ustadh");
+            console.error('Error saving ustadh:', error);
+            toast.error(`Failed to ${ustadh ? 'update' : 'create'} ustadh`);
         } finally {
             setIsSubmitting(false);
         }
@@ -123,9 +131,17 @@ export function UstadhFormDialog({
                                 <FormItem>
                                     <FormLabel>Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Enter ustadh name" {...field} />
+                                        <Input
+                                            placeholder="Enter ustadh name"
+                                            {...field}
+                                            className={formErrors.name ? "border-destructive" : ""}
+                                        />
                                     </FormControl>
-                                    <FormMessage />
+                                    {formErrors.name && (
+                                        <p className="text-sm font-medium text-destructive">
+                                            {formErrors.name}
+                                        </p>
+                                    )}
                                 </FormItem>
                             )}
                         />
@@ -139,11 +155,16 @@ export function UstadhFormDialog({
                                     <FormControl>
                                         <Textarea
                                             placeholder="Enter ustadh bio"
-                                            className="min-h-[100px]"
+                                            className={`min-h-[100px] ${formErrors.bio ? "border-destructive" : ""}`}
                                             {...field}
+                                            value={field.value || ""}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    {formErrors.bio && (
+                                        <p className="text-sm font-medium text-destructive">
+                                            {formErrors.bio}
+                                        </p>
+                                    )}
                                 </FormItem>
                             )}
                         />
@@ -159,9 +180,14 @@ export function UstadhFormDialog({
                                             placeholder="Enter photo URL"
                                             {...field}
                                             value={field.value || ""}
+                                            className={formErrors.photo_url ? "border-destructive" : ""}
                                         />
                                     </FormControl>
-                                    <FormMessage />
+                                    {formErrors.photo_url && (
+                                        <p className="text-sm font-medium text-destructive">
+                                            {formErrors.photo_url}
+                                        </p>
+                                    )}
                                 </FormItem>
                             )}
                         />

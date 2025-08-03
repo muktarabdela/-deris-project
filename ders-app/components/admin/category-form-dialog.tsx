@@ -2,8 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import {
     Dialog,
     DialogContent,
@@ -27,15 +25,6 @@ import { Loader2 } from "lucide-react";
 import { categoryService } from "@/lib/services/category";
 import { CategoryModel } from "@/model/Category";
 
-const formSchema = z.object({
-    name: z.string().min(2, {
-        message: "Name must be at least 2 characters.",
-    }),
-    description: z.string().optional(),
-    createdAt: z.date().optional(),
-    updatedAt: z.date().optional(),
-});
-
 interface CategoryFormDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -50,43 +39,61 @@ export function CategoryFormDialog({
     onSuccess,
 }: CategoryFormDialogProps) {
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    const form = useForm<z.infer<typeof formSchema>>({
-        resolver: zodResolver(formSchema),
+    const form = useForm<CategoryModel>({
         defaultValues: {
             name: "",
             description: "",
-            createdAt: new Date(),
-            updatedAt: new Date(),
         },
     });
 
+    const validateForm = (data: CategoryModel) => {
+        const errors: Record<string, string> = {};
+
+        if (!data.name || data.name.trim().length < 2) {
+            errors.name = "Name must be at least 2 characters";
+        }
+
+        if (!data.description || data.description.trim().length < 2) {
+            errors.description = "Description must be at least 2 characters";
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     useEffect(() => {
         if (category) {
             form.reset({
                 name: category.name,
                 description: category.description || "",
-                createdAt: category.createdAt || new Date(),
-                updatedAt: category.updatedAt || new Date(),
             });
         } else {
             form.reset({
                 name: "",
                 description: "",
-                createdAt: new Date(),
-                updatedAt: new Date(),
             });
         }
     }, [category, open, form]);
 
-    async function onSubmit(values: z.infer<typeof formSchema>) {
+    async function onSubmit(data: CategoryModel) {
+        if (!validateForm(data)) {
+            return;
+        }
         try {
+
             setIsSubmitting(true);
+            const now = new Date();
+            const categoryData = {
+                ...data,
+                createdAt: now,
+                updatedAt: now
+            };
             if (category) {
-                await categoryService.update(category.id, values);
+                await categoryService.update(category.id, categoryData);
             } else {
-                await categoryService.create(values);
+                await categoryService.create(categoryData);
             }
             onSuccess();
             toast.success("Category saved successfully");
@@ -113,7 +120,7 @@ export function CategoryFormDialog({
                                 <FormItem>
                                     <FormLabel>Name</FormLabel>
                                     <FormControl>
-                                        <Input placeholder="Enter category name" {...field} />
+                                        <Input placeholder="Enter category name" {...field} className={formErrors.name ? "border-destructive" : ""} />
                                     </FormControl>
                                     <FormMessage />
                                 </FormItem>
@@ -129,8 +136,9 @@ export function CategoryFormDialog({
                                     <FormControl>
                                         <Textarea
                                             placeholder="Enter category description"
-                                            className="min-h-[100px]"
                                             {...field}
+                                            value={field.value ?? ''}
+                                            className={formErrors.description ? "border-destructive" : ""}
                                         />
                                     </FormControl>
                                     <FormMessage />

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
+
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -41,18 +40,7 @@ import { UstadhModel } from '@/model/Ustadh';
 import { CategoryModel } from '@/model/Category';
 import { useData } from '@/context/dataContext';
 
-const formSchema = z.object({
-    title: z.string().min(1, 'Title is required'),
-    description: z.string().min(1, 'Description is required'),
-    thumbnail_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-    book_pdf_url: z.string().url('Must be a valid URL').optional().or(z.literal('')),
-    is_published: z.boolean().default(false),
-    order: z.coerce.number().int().min(0, 'Order must be a positive number'),
-    ustadh_id: z.string().min(1, 'Ustadh is required'),
-    category_id: z.string().min(1, 'Category is required'),
-    createdAt: z.date().optional(),
-    updatedAt: z.date().optional(),
-});
+
 
 
 interface DersFormDialogProps {
@@ -65,9 +53,9 @@ interface DersFormDialogProps {
 export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: DersFormDialogProps) {
     const { derses, ustadhs, categories, error, refreshData } = useData();
     const [loading, setLoading] = useState(false);
+    const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const form = useForm<DersModel>({
-        resolver: zodResolver(formSchema),
         defaultValues: {
             title: '',
             description: '',
@@ -77,8 +65,6 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
             order: 0,
             ustadh_id: '',
             category_id: '',
-            createdAt: new Date(),
-            updatedAt: new Date(),
         },
     });
 
@@ -94,37 +80,89 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                 order: ders.order,
                 ustadh_id: ders.ustadh_id,
                 category_id: ders.category_id,
-                createdAt: ders.createdAt,
-                updatedAt: ders.updatedAt,
             });
         } else {
-            form.reset({
-                title: '',
-                description: '',
-                thumbnail_url: '',
-                book_pdf_url: '',
-                is_published: false,
-                order: 0,
-                ustadh_id: '',
-                category_id: '',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            });
+            form.reset(
+                {
+                    title: '',
+                    description: '',
+                    thumbnail_url: '',
+                    book_pdf_url: '',
+                    is_published: false,
+                    order: 0,
+                    ustadh_id: '',
+                    category_id: '',
+                }
+            );
         }
     }, [ders, open]);
 
-    const onSubmit = async (values: DersModel) => {
-        console.log("values");
+    const validateForm = (data: DersModel) => {
+        const errors: Record<string, string> = {};
+
+        // Required field validation
+        if (!data.title || data.title.trim().length < 2) {
+            errors.title = "Title must be at least 2 characters.";
+        }
+        if (!data.description || data.description.trim() === '') {
+            errors.description = "Description is required.";
+        }
+        if (!data.ustadh_id) {
+            errors.ustadh_id = "Please select an ustadh.";
+        }
+        if (!data.category_id) {
+            errors.category_id = "Please select a category.";
+        }
+
+        // Optional URL validation
+        const validateUrl = (url: string) => {
+            if (url && url.trim() !== "") {
+                try {
+                    new URL(url);
+                } catch {
+                    return false;
+                }
+            }
+            return true;
+        };
+
+        if (data.thumbnail_url?.trim() === "") {
+            errors.thumbnail_url = "Please enter a valid URL or leave it empty.";
+        } else if (!validateUrl(data.thumbnail_url?.trim() || '')) {
+            errors.thumbnail_url = "Please enter a valid URL or leave it empty.";
+        }
+
+        if (data.book_pdf_url?.trim() === "") {
+            errors.book_pdf_url = "Please enter a valid URL or leave it empty.";
+        } else if (!validateUrl(data.book_pdf_url?.trim() || '')) {
+            errors.book_pdf_url = "Please enter a valid URL or leave it empty.";
+        }
+
+        if (data.order === 0) {
+            errors.order = "Please enter a valid order.";
+        }
+
+        setFormErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const onSubmit = async (data: DersModel) => {
+        if (!validateForm(data)) {
+            return;
+        }
         try {
             setLoading(true);
-
+            const now = new Date();
+            const dersData = {
+                ...data,
+                createdAt: now,
+                updatedAt: now
+            };
             if (ders) {
-                // Update existing ders
-                await dersService.update(ders.id, values);
+                await dersService.update(ders.id, dersData);
                 toast.success('Ders updated successfully');
             } else {
-                // Create new ders
-                await dersService.create(values);
+                await dersService.create(dersData);
                 toast.success('Ders created successfully');
             }
 
@@ -158,8 +196,13 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                     <FormItem className="md:col-span-2">
                                         <FormLabel>Title</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="Enter ders title" {...field} />
+                                            <Input placeholder="Enter ders title" {...field} value={field.value || ''} className={formErrors.title ? "border-destructive" : ""} />
                                         </FormControl>
+                                        {/* {formErrors.title && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                {formErrors.title}
+                                            </p>
+                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -174,10 +217,16 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                         <FormControl>
                                             <Textarea
                                                 placeholder="Enter ders description"
-                                                className="min-h-[100px]"
                                                 {...field}
+                                                value={field.value || ''}
+                                                className={formErrors.description ? "border-destructive" : ""}
                                             />
                                         </FormControl>
+                                        {/* {formErrors.description && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                {formErrors.description}
+                                            </p>
+                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -191,7 +240,7 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                         <FormLabel>Ustadh</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className={formErrors.ustadh_id ? "border-destructive" : ""}>
                                                     <SelectValue placeholder="Select an ustadh" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -202,7 +251,13 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>
+
                                         </Select>
+                                        {/* {formErrors.ustadh_id && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                {formErrors.ustadh_id}
+                                            </p>
+                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -216,7 +271,7 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                         <FormLabel>Category</FormLabel>
                                         <Select onValueChange={field.onChange} value={field.value}>
                                             <FormControl>
-                                                <SelectTrigger>
+                                                <SelectTrigger className={formErrors.category_id ? "border-destructive" : ""}>
                                                     <SelectValue placeholder="Select a category" />
                                                 </SelectTrigger>
                                             </FormControl>
@@ -228,6 +283,11 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                                 ))}
                                             </SelectContent>
                                         </Select>
+                                        {/* {formErrors.category_id && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                {formErrors.category_id}
+                                            </p>
+                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -240,8 +300,13 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                     <FormItem>
                                         <FormLabel>Thumbnail URL</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://example.com/thumbnail.jpg" {...field} />
+                                            <Input placeholder="https://example.com/thumbnail.jpg" {...field} value={field.value || ''} onChange={field.onChange} className={formErrors.thumbnail_url ? "border-destructive" : ""} />
                                         </FormControl>
+                                        {/* {formErrors.thumbnail_url && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                {formErrors.thumbnail_url}
+                                            </p>
+                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -254,8 +319,13 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                     <FormItem>
                                         <FormLabel>Book PDF URL</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://example.com/book.pdf" {...field} />
+                                            <Input placeholder="https://example.com/book.pdf" {...field} value={field.value || ''} onChange={field.onChange} className={formErrors.book_pdf_url ? "border-destructive" : ""} />
                                         </FormControl>
+                                        {/* {formErrors.book_pdf_url && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                {formErrors.book_pdf_url}
+                                            </p>
+                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -268,8 +338,13 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                     <FormItem>
                                         <FormLabel>Display Order</FormLabel>
                                         <FormControl>
-                                            <Input type="number" min={0} {...field} />
+                                            <Input type="number" min={0} {...field} value={field.value || ''} onChange={field.onChange} className={formErrors.order ? "border-destructive" : ""} />
                                         </FormControl>
+                                        {/* {formErrors.order && (
+                                            <p className="text-sm font-medium text-destructive">
+                                                {formErrors.order}
+                                            </p>
+                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}

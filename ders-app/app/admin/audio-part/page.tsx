@@ -1,8 +1,11 @@
 "use client";
 
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
+import { useData } from "@/context/dataContext";
+import { audioPartService } from "@/lib/services/audio-part";
+import { AudioPartModel } from "@/model/AudioPart";
+import { useState } from "react";
+import { toast } from "sonner";
+import { AudioPartFormDialog } from "@/components/admin/audio-part-form-dialog";
 import { Search, Plus, MoreVertical, User, BookOpen, Loader2, Edit, Trash2 } from 'lucide-react';
 import {
     Table,
@@ -18,49 +21,48 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import Image from 'next/image';
-import { toast } from 'sonner';
-import { ustadhService } from '@/lib/services/ustadh';
-import { format } from 'date-fns';
-import { UstadhFormDialog } from '@/components/admin/ustadh-form-dialog';
-import { UstadhModel } from '@/model/Ustadh';
-import { useData } from '@/context/dataContext';
-
-
-export default function UstadhsPage() {
-    const { ustadhs, error, refreshData, derses } = useData();
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { QuizQuestionModel } from "@/model/QuizQuestion";
+export default function AudioPartsPage() {
+    const { audioParts, loading, error, refreshData, derses, quizzes, quizQuestions } = useData();
     const [searchQuery, setSearchQuery] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
+
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [editingUstadh, setEditingUstadh] = useState<UstadhModel | null>(null);
+    const [editingAudioPart, setEditingAudioPart] = useState<AudioPartModel | null>(null);
 
-
+    const [isAddQuizOpen, setIsAddQuizOpen] = useState(false)
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Are you sure you want to delete this ustadh?')) return;
+        if (!confirm('Are you sure you want to delete this audio part?')) return;
 
         try {
             setIsDeleting(id);
-            await ustadhService.delete(id);
+            await audioPartService.delete(id);
             refreshData();
-            toast.success('Ustadh deleted successfully');
+            toast.success('Audio part deleted successfully');
         } catch (error) {
-            console.error('Error deleting ustadh:', error);
-            toast.error('Failed to delete ustadh');
+            console.error('Error deleting audio part:', error);
+            toast.error('Failed to delete audio part');
         } finally {
             setIsDeleting(null);
         }
     };
 
-    const handleEdit = (ustadh: UstadhModel) => {
-        console.log('Editing ustadh:', ustadh);
-        setEditingUstadh(ustadh);
+    const handleEdit = (audioPart: AudioPartModel) => {
+        setEditingAudioPart(audioPart);
         setIsDialogOpen(true);
     };
 
-    const handleAddUstadh = () => {
-        setEditingUstadh(null);
+    const handleAddQuizToAudio = () => {
+        setIsAddQuizOpen(true)
+    }
+
+    const handleAddAudioPart = () => {
+        setEditingAudioPart(null);
         setIsDialogOpen(true);
     };
 
@@ -69,16 +71,16 @@ export default function UstadhsPage() {
             setIsLoading(true);
             refreshData();
             setIsDialogOpen(false);
-            setEditingUstadh(null);
+            setEditingAudioPart(null);
         } catch (error) {
-            console.error('Error refreshing ustadhs:', error);
-            toast.error('Failed to refresh ustadhs list');
+            console.error('Error refreshing audio parts:', error);
+            toast.error('Failed to refresh audio parts list');
         } finally {
             setIsLoading(false);
         }
     };
 
-    if (isLoading && ustadhs.length === 0) {
+    if (loading) {
         return (
             <div className="flex items-center justify-center h-64">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -86,31 +88,34 @@ export default function UstadhsPage() {
         );
     }
 
-    const filteredUstadhs = ustadhs?.filter((ustadh) =>
-        ustadh.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredAudioParts = audioParts?.filter((audioPart) =>
+        audioPart.title.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    const getQuizQuestions = (quizId: string): QuizQuestionModel[] => {
+        return quizQuestions?.filter(q => q.quiz_id === quizId) || [];
+    }
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
                 <div>
-                    <h1 className="text-3xl font-bold">Ustadhs</h1>
-                    <p className="text-muted-foreground">Manage Islamic scholars and teachers</p>
+                    <h1 className="text-3xl font-bold">Audio Parts</h1>
+                    <p className="text-muted-foreground">Manage audio parts</p>
                 </div>
                 <div className="flex items-center space-x-2">
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search ustadhs..."
+                            placeholder="Search audio parts..."
                             className="pl-8 sm:w-[300px]"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
                         />
                     </div>
-                    <Button onClick={handleAddUstadh}>
+                    <Button onClick={handleAddAudioPart}>
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Ustadh
+                        Add Audio Part
                     </Button>
                 </div>
             </div>
@@ -119,51 +124,47 @@ export default function UstadhsPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Ustadh</TableHead>
-                            <TableHead>Bio</TableHead>
-                            <TableHead>Ders</TableHead>
-                            <TableHead>Added</TableHead>
+                            <TableHead>Title</TableHead>
+                            <TableHead>Status</TableHead>
+                            <TableHead>duration in seconds</TableHead>
+                            <TableHead>order</TableHead>
+                            <TableHead>ders name</TableHead>
+                            <TableHead>total quiz Questions</TableHead>
+
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredUstadhs?.length === 0 ? (
+                        {filteredAudioParts?.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                                    {searchQuery ? 'No matching ustadhs found' : 'No ustadhs found'}
+                                <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                                    {searchQuery ? 'No matching audio parts found' : 'No audio parts found'}
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredUstadhs?.map((ustadh) => (
-                                <TableRow key={ustadh.id}>
+                            filteredAudioParts?.map((audioPart) => (
+                                <TableRow key={audioPart.id}>
                                     <TableCell className="font-medium">
                                         <div className="flex items-center space-x-3">
-                                            <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-full bg-muted">
-                                                {ustadh.photo_url ? (
-                                                    <Image
-                                                        src={ustadh.photo_url}
-                                                        alt={ustadh.name}
-                                                        fill
-                                                        className="object-cover"
-                                                    />
-                                                ) : (
-                                                    <User className="h-5 w-5 text-muted-foreground m-auto" />
-                                                )}
-                                            </div>
-                                            <span>{ustadh.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="max-w-[200px] truncate">
-                                        {ustadh.bio || 'No bio available'}
-                                    </TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center text-sm">
-                                            <BookOpen className="mr-1 h-4 w-4 text-muted-foreground" />
-                                            {derses?.filter(d => d.ustadh_id === ustadh.id).length || 0} ders
+                                            {audioPart.title}
                                         </div>
                                     </TableCell>
                                     <TableCell>
-                                        {ustadh.createdAt ? format(new Date(ustadh.createdAt), 'MMM d, yyyy') : 'N/A'}
+                                        <Badge variant={audioPart.is_published ? 'default' : 'secondary'}>
+                                            {audioPart.is_published ? 'Published' : 'Draft'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell>
+                                        {audioPart.duration_in_seconds}
+                                    </TableCell>
+                                    <TableCell>
+                                        {audioPart.order}
+                                    </TableCell>
+                                    <TableCell>
+                                        {derses?.find((ders) => ders.id === audioPart.ders_id)?.title}
+                                    </TableCell>
+                                    <TableCell>
+                                        {getQuizQuestions(audioPart.id).length || 0}
                                     </TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
@@ -174,16 +175,20 @@ export default function UstadhsPage() {
                                                 </Button>
                                             </DropdownMenuTrigger>
                                             <DropdownMenuContent align="end">
-                                                <DropdownMenuItem onClick={() => handleEdit(ustadh)}>
+                                                <DropdownMenuItem onClick={() => handleEdit(audioPart)}>
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Edit
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={handleAddQuizToAudio}>
+
+                                                    Add Quiz
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="text-destructive"
-                                                    onClick={() => handleDelete(ustadh.id)}
-                                                    disabled={isDeleting === ustadh.id}
+                                                    onClick={() => handleDelete(audioPart.id)}
+                                                    disabled={isDeleting === audioPart.id}
                                                 >
-                                                    {isDeleting === ustadh.id ? (
+                                                    {isDeleting === audioPart.id ? (
                                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                                                     ) : (
                                                         <Trash2 className="mr-2 h-4 w-4" />
@@ -202,13 +207,13 @@ export default function UstadhsPage() {
 
             <div className="flex items-center justify-between px-2">
                 <div className="text-sm text-muted-foreground">
-                    Showing <strong>1-{ustadhs.length}</strong> of <strong>{ustadhs.length}</strong> ustadhs
+                    Showing <strong>1-{audioParts.length}</strong> of <strong>{audioParts.length}</strong> audio parts
                 </div>
             </div>
-            <UstadhFormDialog
+            <AudioPartFormDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
-                ustadh={editingUstadh}
+                audioPart={editingAudioPart}
                 onSuccess={handleSuccess}
             />
         </div>
