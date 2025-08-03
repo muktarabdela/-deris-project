@@ -5,7 +5,6 @@ import { Play, Pause, RefreshCcw, RefreshCw, Undo, Redo } from 'lucide-react';
 import { useData } from '@/context/dataContext';
 import { AudioPartModel } from '@/model/AudioPart';
 import { Document, Page, pdfjs } from 'react-pdf';
-// import toast from 'react-hot-toast'; // Import toast
 
 // CSS imports for react-pdf
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -14,10 +13,14 @@ import 'react-pdf/dist/Page/TextLayer.css';
 // Setting up the PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.mjs`;
 
+type AudioPartModelWithAudioUrl = AudioPartModel & {
+    audioUrl: string;
+};
 type AudioPlayerProps = {
-    audioPart: AudioPartModel;
+    audioPart: AudioPartModelWithAudioUrl;
     onComplete: () => void;
 };
+
 
 // Renamed component for clarity since quiz functionality is removed
 export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) {
@@ -80,78 +83,18 @@ export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) 
         };
     }, [audioPart.id, onComplete]);
 
-    const togglePlayPause = async () => {
+    const togglePlayPause = () => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        try {
-            if (isPlaying) {
-                await audio.pause();
-                setIsPlaying(false);
-            } else {
-                // Ensure the audio source is set and can play
-                if (!audio.src) {
-                    console.error('No audio source available');
-                    return;
-                }
-
-                // Reset the audio if it's already ended
-                if (audio.ended) {
-                    audio.currentTime = 0;
-                }
-
-                const playPromise = audio.play();
-
-                if (playPromise !== undefined) {
-                    await playPromise
-                        .then(() => {
-                            setIsPlaying(true);
-                        })
-                        .catch(error => {
-                            console.error('Error playing audio:', error);
-                            setIsPlaying(false);
-                            // Handle different error cases
-                            if (error.name === 'NotAllowedError') {
-                                // toast.error('Please allow audio playback in your browser settings');
-                            } else if (error.name === 'NotSupportedError') {
-                                // toast.error('This audio format is not supported by your browser');
-                            } else {
-                                // toast.error('Failed to play audio. Please try again.');
-                            }
-                        });
-                }
-            }
-        } catch (error) {
-            console.error('Error in togglePlayPause:', error);
-            setIsPlaying(false);
+        if (isPlaying) {
+            audio.pause();
+        } else {
+            // This is now the only place where audio.play() is called
+            audio.play().catch(console.error);
         }
+        setIsPlaying(!isPlaying);
     };
-
-    useEffect(() => {
-        const audio = audioRef.current;
-        if (!audio) return;
-
-        const handleCanPlay = () => {
-            setIsLoading(false);
-            console.log('Audio can play');
-        };
-
-        const handleError = (e: Event) => {
-            console.error('Audio error:', e);
-            setIsLoading(false);
-            setIsPlaying(false);
-            const error = e as ErrorEvent;
-            // toast.error(`Audio error: ${error.message || 'Failed to load audio'}`);
-        };
-
-        audio.addEventListener('canplay', handleCanPlay);
-        audio.addEventListener('error', handleError);
-
-        return () => {
-            audio.removeEventListener('canplay', handleCanPlay);
-            audio.removeEventListener('error', handleError);
-        };
-    }, [audioPart.audioUrl]);
 
     const handleSeek = (amount: number) => {
         const audio = audioRef.current;
@@ -174,11 +117,11 @@ export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) 
     return (
         <div className="bg-primary/20 h-screen flex flex-col">
             {/* Header */}
-            <header className="flex-shrink-0 flex items-center justify-between p-4 text-white">
+            {/* <header className="flex-shrink-0 flex items-center justify-between p-4 text-white">
                 <div className="flex-1 text-center">
                     <h1 className="text-xl font-semibold">{audioPart.title}</h1>
                 </div>
-            </header>
+            </header> */}
 
             {/* PDF Viewer */}
             <main className="flex-1 bg-white overflow-y-auto max-h-[calc(100vh-64px)]">
