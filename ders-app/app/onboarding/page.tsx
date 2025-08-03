@@ -3,51 +3,32 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, ArrowRight } from 'lucide-react';
-
-type LearningLevel = 'beginner' | 'intermediate' | 'advanced';
-type Interest = 'tajweed' | 'nooraniya' | 'tafsir' | 'memorization' | 'dua' | 'manners';
-type WeeklyGoal = '1-2' | '3-4' | '5+';
+import { ArrowRight, BookOpen, Target, Users, Zap } from 'lucide-react';
+import { useData } from '@/context/dataContext';
+import { getTelegramUser } from '@/lib/utils/telegram';
+import { userService } from '@/lib/services/user';
 
 export default function OnboardingPage() {
     const router = useRouter();
     const [step, setStep] = useState(1);
-    const [learningLevel, setLearningLevel] = useState<LearningLevel | null>(null);
-    const [interests, setInterests] = useState<Interest[]>([]);
-    const [weeklyGoal, setWeeklyGoal] = useState<WeeklyGoal | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const { users, refreshData } = useData();
+    const completeOnboarding = async () => {
+        const tgUser = getTelegramUser();
+        if (!tgUser) return;
 
-    const toggleInterest = (interest: Interest) => {
-        setInterests(prev =>
-            prev.includes(interest)
-                ? prev.filter(i => i !== interest)
-                : [...prev, interest]
-        );
+        // Add service logic to mark onboarding as complete
+        await userService.markOnboardingComplete(tgUser.id);
+        await refreshData();
+
+        router.replace("/dashboard");
     };
 
-    const handleSubmit = async () => {
-        if (!learningLevel || interests.length === 0 || !weeklyGoal) {
-            // Handle validation
-            return;
-        }
-
-        setIsSubmitting(true);
-
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
-        // TODO: Save preferences to backend
-        console.log({ learningLevel, interests, weeklyGoal });
-
-        // Redirect to dashboard
-        router.push('/dashboard');
-    };
 
     const nextStep = () => {
-        if (step < 3) {
+        if (step < 4) {
             setStep(step + 1);
         } else {
-            handleSubmit();
+            completeOnboarding();
         }
     };
 
@@ -61,104 +42,73 @@ export default function OnboardingPage() {
         switch (step) {
             case 1:
                 return (
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold text-foreground">What is your current Quran learning level?</h2>
-                        <div className="space-y-3">
-                            {[
-                                { id: 'beginner', label: 'Beginner', description: 'I\'m new to reading' },
-                                { id: 'intermediate', label: 'Intermediate', description: 'I can read, want to improve' },
-                                { id: 'advanced', label: 'Advanced', description: 'Focus on memorization or Tajweed' },
-                            ].map(({ id, label, description }) => (
-                                <button
-                                    key={id}
-                                    onClick={() => setLearningLevel(id as LearningLevel)}
-                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${learningLevel === id
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:border-primary/50'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${learningLevel === id ? 'bg-primary border-primary' : 'border-foreground/30'
-                                            }`}>
-                                            {learningLevel === id && <Check className="w-3 h-3 text-white" />}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-foreground">{label}</h3>
-                                            <p className="text-sm text-muted-foreground">{description}</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
+                    <div className="text-center space-y-4">
+                        <motion.div
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="flex justify-center"
+                        >
+                            <BookOpen className="w-24 h-24 text-primary" />
+                        </motion.div>
+                        <h2 className="text-2xl font-bold text-foreground">Welcome to Your Learning Journey</h2>
+                        <p className="text-muted-foreground max-w-md mx-auto">
+                            Discover a new way to engage with the Quran. Our app is designed to make learning intuitive, engaging, and personalized for you.
+                        </p>
                     </div>
                 );
 
             case 2:
                 return (
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold text-foreground">Which topics are you most interested in?</h2>
-                        <p className="text-muted-foreground">Select all that apply</p>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            {[
-                                { id: 'tajweed', label: 'Tajweed' },
-                                { id: 'nooraniya', label: 'Al-Qaida Nooraniya' },
-                                { id: 'tafsir', label: 'Tafsir' },
-                                { id: 'memorization', label: 'Memorization' },
-                                { id: 'dua', label: 'Dua & Azkar' },
-                                { id: 'manners', label: 'Islamic Manners' },
-                            ].map(({ id, label }) => (
-                                <button
-                                    key={id}
-                                    onClick={() => toggleInterest(id as Interest)}
-                                    className={`p-4 rounded-xl border-2 transition-all ${interests.includes(id as Interest)
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:border-primary/50'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-5 h-5 rounded border flex items-center justify-center ${interests.includes(id as Interest) ? 'bg-primary border-primary' : 'border-foreground/30'
-                                            }`}>
-                                            {interests.includes(id as Interest) && <Check className="w-3 h-3 text-white" />}
-                                        </div>
-                                        <span className="font-medium">{label}</span>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
+                    <div className="text-center space-y-4">
+                        <motion.div
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="flex justify-center"
+                        >
+                            <Zap className="w-24 h-24 text-primary" />
+                        </motion.div>
+                        <h2 className="text-2xl font-bold text-foreground">Interactive Lessons & Quizzes</h2>
+                        <p className="text-muted-foreground max-w-md mx-auto">
+                            Dive into interactive lessons covering everything from Tajweed to Tafsir. Test your knowledge with engaging quizzes and track your progress.
+                        </p>
                     </div>
                 );
 
             case 3:
                 return (
-                    <div className="space-y-6">
-                        <h2 className="text-2xl font-bold text-foreground">How many days a week do you want to study?</h2>
-                        <div className="space-y-3">
-                            {[
-                                { id: '1-2', label: '1-2 days', description: 'Casual learning' },
-                                { id: '3-4', label: '3-4 days', description: 'Regular commitment' },
-                                { id: '5+', label: '5+ days', description: 'Intensive learning' },
-                            ].map(({ id, label, description }) => (
-                                <button
-                                    key={id}
-                                    onClick={() => setWeeklyGoal(id as WeeklyGoal)}
-                                    className={`w-full text-left p-4 rounded-xl border-2 transition-all ${weeklyGoal === id
-                                            ? 'border-primary bg-primary/5'
-                                            : 'border-border hover:border-primary/50'
-                                        }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${weeklyGoal === id ? 'bg-primary border-primary' : 'border-foreground/30'
-                                            }`}>
-                                            {weeklyGoal === id && <Check className="w-3 h-3 text-white" />}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-foreground">{label}</h3>
-                                            <p className="text-sm text-muted-foreground">{description}</p>
-                                        </div>
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
+                    <div className="text-center space-y-4">
+                        <motion.div
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="flex justify-center"
+                        >
+                            <Target className="w-24 h-24 text-primary" />
+                        </motion.div>
+                        <h2 className="text-2xl font-bold text-foreground">Personalized Goals & Tracking</h2>
+                        <p className="text-muted-foreground max-w-md mx-auto">
+                            Set weekly goals to stay motivated. Our app helps you track your learning habits and celebrate your achievements along the way.
+                        </p>
+                    </div>
+                );
+
+            case 4:
+                return (
+                    <div className="text-center space-y-4">
+                        <motion.div
+                            initial={{ scale: 0.5, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.5 }}
+                            className="flex justify-center"
+                        >
+                            <Users className="w-24 h-24 text-primary" />
+                        </motion.div>
+                        <h2 className="text-2xl font-bold text-foreground">Community & Support</h2>
+                        <p className="text-muted-foreground max-w-md mx-auto">
+                            You're not alone! Join a community of learners, share your progress, and get support from peers and instructors.
+                        </p>
                     </div>
                 );
 
@@ -168,88 +118,53 @@ export default function OnboardingPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-background flex flex-col justify-center">
             <div className="container mx-auto px-4 py-12 max-w-3xl">
-                {/* Progress Bar */}
-                <div className="mb-8">
-                    <div className="h-2 bg-muted rounded-full overflow-hidden">
+                {/* Progress Indicators */}
+                <div className="flex justify-center space-x-2 mb-12">
+                    {[1, 2, 3, 4].map((s) => (
                         <motion.div
-                            className="h-full bg-primary rounded-full"
-                            initial={{ width: '0%' }}
-                            animate={{ width: `${(step / 3) * 100}%` }}
-                            transition={{ duration: 0.3 }}
+                            key={s}
+                            className={`h-2 rounded-full ${step >= s ? 'bg-primary' : 'bg-muted'}`}
+                            initial={{ width: '0rem' }}
+                            animate={{ width: '4rem' }}
+                            transition={{ duration: 0.5, delay: s * 0.1 }}
                         />
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-2 text-right">
-                        Step {step} of 3
-                    </p>
+                    ))}
                 </div>
 
                 {/* Content */}
                 <AnimatePresence mode="wait">
                     <motion.div
                         key={step}
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 30 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
+                        exit={{ opacity: 0, y: -30 }}
+                        transition={{ duration: 0.4 }}
                         className="space-y-8"
                     >
-                        {step === 1 && (
-                            <motion.div
-                                initial={{ opacity: 0, y: 10 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: 0.2 }}
-                            >
-                                <h1 className="text-3xl font-bold text-foreground mb-2">Salam 👋</h1>
-                                <p className="text-lg text-muted-foreground">Let's personalize your learning journey.</p>
-                                <p className="text-muted-foreground">Tell us a bit about you.</p>
-                            </motion.div>
-                        )}
-
                         {renderStepContent()}
                     </motion.div>
                 </AnimatePresence>
 
                 {/* Navigation */}
-                <div className="mt-12 flex justify-between">
+                <div className="mt-16 flex items-center justify-between">
                     <button
                         onClick={prevStep}
-                        className={`px-6 py-3 rounded-lg font-medium ${step === 1
-                                ? 'text-muted-foreground cursor-not-allowed'
-                                : 'text-foreground hover:bg-accent/50 transition-colors'
+                        className={`px-6 py-3 rounded-lg font-medium transition-colors ${step === 1
+                            ? 'text-muted-foreground cursor-not-allowed opacity-50'
+                            : 'text-foreground hover:bg-accent'
                             }`}
                         disabled={step === 1}
                     >
                         Back
                     </button>
-
                     <button
                         onClick={nextStep}
-                        disabled={
-                            (step === 1 && !learningLevel) ||
-                            (step === 2 && interests.length === 0) ||
-                            (step === 3 && !weeklyGoal) ||
-                            isSubmitting
-                        }
-                        className={`px-6 py-3 rounded-lg font-medium flex items-center gap-2 ${isSubmitting
-                                ? 'bg-primary/80 cursor-not-allowed'
-                                : 'bg-primary hover:bg-primary/90'
-                            } text-primary-foreground transition-colors`}
+                        className="px-6 py-3 rounded-lg font-medium flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
                     >
-                        {isSubmitting ? (
-                            'Saving...'
-                        ) : step === 3 ? (
-                            <>
-                                Start My Learning
-                                <ArrowRight className="w-4 h-4" />
-                            </>
-                        ) : (
-                            <>
-                                Continue
-                                <ArrowRight className="w-4 h-4" />
-                            </>
-                        )}
+                        {step === 4 ? 'Get Started' : 'Continue'}
+                        <ArrowRight className="w-4 h-4" />
                     </button>
                 </div>
             </div>

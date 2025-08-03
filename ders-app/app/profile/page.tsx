@@ -99,6 +99,14 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </div>
+            {/* current active ders */}
+            <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">
+
+                <h3 className="font-medium flex items-center gap-2">
+
+                </h3>
+            </div>
+
 
             {/* Account Information */}
             <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">

@@ -16,51 +16,51 @@ export default function Home() {
     const [error, setError] = useState<string | null>(null);
     const { users, refreshData } = useData();
 
+    const [isSyncing, setIsSyncing] = useState(false);
+
     useEffect(() => {
         let timer: NodeJS.Timeout | null = null;
 
         const initializeApp = async () => {
+            // Prevent re-syncing if already in progress or completed
+            if (isSyncing || users?.length > 0) {
+                return;
+            }
+            setIsSyncing(true);
+
             try {
                 await loadTelegramWebApp();
-
                 expandTelegramWebApp();
 
                 const tgUser = getTelegramUser();
-
                 if (!tgUser || typeof tgUser.id !== 'number') {
                     setError("እባኮትን መተግበሪያውን ከቴሌግራም ውስጥ በድጋሚ ይክፈቱ።");
                     setIsLoading(false);
                     return;
                 }
 
-                // First, check if user exists and get current data
-                let user = users?.find((user) => Number(user.telegram_user_id) === tgUser.id);
+                // This logic will now run once to ensure user exists and is updated.
+                // The redirection will be handled by the effect re-running when `users` data changes.
+                const userExists = users?.some((user) => Number(user.telegram_user_id) === tgUser.id);
 
-                // If user doesn't exist, create them
-                if (!user) {
+                if (!userExists) {
                     await userService.upsertTelegramUser({
                         id: tgUser.id,
                         first_name: tgUser.first_name || "",
                         username: tgUser.username || "",
                         photo_url: tgUser.photo_url || "",
                     });
-                    refreshData();
                 } else {
-                    // If user exists, update only if needed
                     await userService.updateUserIfNeeded({
                         id: tgUser.id,
                         first_name: tgUser.first_name || "",
                         username: tgUser.username || "",
                         photo_url: tgUser.photo_url || "",
                     });
-                    refreshData();
                 }
 
-                setIsLoading(false);
-
-                timer = setTimeout(() => {
-                    router.push('/onboarding');
-                }, 1000);
+                // Refreshing data will cause this useEffect hook to run again with fresh `users`.
+                await refreshData();
 
             } catch (err: any) {
                 setError(err.message || "እባኮትን መተግበሪያውን ከቴሌግራም ውስጥ በድጋሚ ይክፈቱ።");
@@ -68,12 +68,38 @@ export default function Home() {
             }
         };
 
-        initializeApp();
+        // This function handles the redirection logic based on the current `users` state.
+        const handleRedirect = () => {
+            const tgUser = getTelegramUser();
+            if (!tgUser) return;
+
+            const user = users?.find((u) => Number(u.telegram_user_id) === tgUser.id);
+            console.log("user", user);
+            // Only redirect if we have a definitive user object.
+            if (user) {
+                setIsLoading(false);
+                timer = setTimeout(() => {
+                    if (user.is_onboarding_completed === true) {
+                        router.push('/dashboard');
+                    } else {
+                        router.push('/onboarding');
+                    }
+                }, 1000);
+            }
+        };
+
+        if (users && users.length > 0) {
+            handleRedirect();
+        } else {
+            initializeApp();
+        }
 
         return () => {
             if (timer) clearTimeout(timer);
         };
-    }, [router]);
+        // By adding `users` as a dependency, the effect re-runs when `refreshData` provides new information.
+    }, [router, users, refreshData, isSyncing]);
+
 
     if (error) {
         return (

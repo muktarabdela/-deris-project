@@ -19,9 +19,6 @@ export const userService = {
     }) {
         try {
             const telegramUserIdString = id.toString();
-
-            // FIX: Ensure the table name exactly matches your database.
-            // Your screenshot shows "User" (singular).
             const { data, error } = await supabase.from(TABLE_NAME).upsert(
                 {
                     telegram_user_id: telegramUserIdString,
@@ -46,6 +43,15 @@ export const userService = {
             throw err;
         }
     },
+    async markOnboardingComplete(telegramId: number) {
+        const { error } = await supabase
+            .from(TABLE_NAME)
+            .update({ is_onboarding_completed: true, updatedAt: new Date() })
+            .eq("telegram_user_id", telegramId.toString());
+
+        if (error) throw error;
+    },
+
     // create a function to get user by id
     async getUserByTelegramUserId(telegramUserId: number) {
         try {
@@ -205,7 +211,6 @@ export const userService = {
             }
 
             if (photo_url !== undefined && currentUser?.profile_picture_url !== photo_url) {
-                // Handle photo URL updates - you might want to store multiple photos in an array
                 const photoArray = currentUser?.photos || [];
                 if (photo_url && !photoArray.includes(photo_url)) {
                     updates.photos = [...new Set([...photoArray, photo_url])];

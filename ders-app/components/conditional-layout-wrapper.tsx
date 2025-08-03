@@ -14,15 +14,13 @@ export function ConditionalLayoutWrapper({
     const pathname = usePathname();
     const isAdminRoute = pathname.startsWith('/admin');
     const isAudioPage = pathname.includes('/audio/');
-
-    // If it's an admin route, render children directly without any mobile wrapper.
-    // The admin layout (/admin/layout.tsx) will then take full control.
+    const isOnboardingPage = pathname.includes('/onboarding');
     if (isAdminRoute) {
         return <>{children}</>;
     }
 
     // If it's the audio page, render without the header
-    if (isAudioPage) {
+    if (isAudioPage || isOnboardingPage) {
         return (
             <div className="relative max-w-md mx-auto h-screen overflow-y-auto bg-background">
                 <AppContent>
