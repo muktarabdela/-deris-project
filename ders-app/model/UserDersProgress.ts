@@ -5,8 +5,8 @@ export interface UserDersProgressModel {
     user_id: string;
     ders_id: string;
     status: string;
-    started_at: Date;
-    completed_at: Date | null;
+    startedAt: Date;
+    completedAt: Date | null;
 
     createdAt: Date;
     updatedAt: Date;

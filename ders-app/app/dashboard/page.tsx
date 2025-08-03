@@ -34,7 +34,7 @@ type Ders = {
 
 
 export default function DashboardPage() {
-    const { derses, error, refreshData, users, categories, loading, audioParts } = useData();
+    const { derses, error, refreshData, users, categories, loading, audioParts, userAudioProgress, userDersProgress } = useData();
 
     const tgUser = getTelegramUser();
 
@@ -43,30 +43,33 @@ export default function DashboardPage() {
     const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
 
     const activeDers = derses?.find((ders) => ders.id === user?.current_ders_id);
-    const userName = user?.first_name;
+    const totalPart = audioParts?.filter((audioPart) => audioPart.ders_id === activeDers?.id).length || 0;
+
+    // Calculate completed parts for the active ders
+    const completedParts = userAudioProgress?.filter(
+        progress => audioParts?.some(ap =>
+            ap.id === progress.audio_part_id &&
+            ap.ders_id === activeDers?.id &&
+            progress.is_completed
+        )
+    ).length || 0;
+
+    // Calculate progress percentage
+    const progressPercentage = totalPart > 0 ? Math.round((completedParts / totalPart) * 100) : 0;
+
     const userLevel = "Beginner";
     const userCategories = ["Tajweed", "Al-Qaida"];
     const completedDersToday = 0;
     const totalDailyGoal = 1;
 
-    // Mock ders data
-    const currentDers: Ders = {
-        id: '1',
-        title: 'Introduction to Tajweed',
-        description: 'Learn the basics of proper Quranic recitation',
-        progress: 33,
-        totalParts: 6,
-        completedParts: 2,
-        duration: '12 min',
-        category: 'Tajweed',
-        isPopular: true,
-    };
+
 
     if (loading || !user) {
         return (
             <Loading />
         );
     }
+
 
     return (
         <div className="container mx-auto px-4 py-6 max-w-6xl">
@@ -161,12 +164,12 @@ export default function DashboardPage() {
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-xs text-muted-foreground">
                                             <span>Progress</span>
-                                            <span>{activeDers.completedParts} of {activeDers.totalParts} ክፍሎች</span>
+                                            <span>{completedParts} of {totalPart} ክፍሎች</span>
                                         </div>
-                                        <div className="w-full bg-muted rounded-full h-2">
+                                        <div className="w-full bg-primary/20 rounded-full h-2">
                                             <div
                                                 className="bg-primary h-2 rounded-full transition-all duration-500"
-                                                style={{ width: `${activeDers.progress}%` }}
+                                                style={{ width: `${progressPercentage}%` }}
                                             />
                                         </div>
                                     </div>

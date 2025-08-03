@@ -113,13 +113,14 @@ export const userService = {
 
             // Step 2: Create the UserDersProgress record
             const { error: dersProgressError } = await supabase
-                .from('user_ders_progress') // Use your actual table name
+                .from('user_ders_progress')     // Use your actual table name
                 .insert([
                     {
                         user_id: userId,
                         ders_id: dersId,
                         status: 'IN_PROGRESS',
-                        started_at: new Date().toISOString(),
+                        startedAt: new Date().toISOString(),
+                        completedAt: null,
                     },
                 ]);
 
@@ -134,11 +135,12 @@ export const userService = {
                     user_id: userId,
                     audio_part_id: part.id,
                     is_completed: false,
+                    completedAt: new Date().toISOString(),
                     quiz_attempts: 0,
                 }));
 
                 const { error: audioProgressError } = await supabase
-                    .from('user_audio_part_progress') // Use your actual table name
+                    .from('user_audio_part_progress')
                     .insert(newUserAudioPartProgresses);
 
                 if (audioProgressError) {
@@ -151,7 +153,7 @@ export const userService = {
 
             // Step 4: Update the user's current_ders_id
             const { error: updateUserError } = await supabase
-                .from(TABLE_NAME) // Assuming TABLE_NAME is 'users'
+                .from(TABLE_NAME)
                 .update({ current_ders_id: dersId })
                 .eq('id', userId);
 
