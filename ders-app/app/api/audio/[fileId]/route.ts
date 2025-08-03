@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { NextApiRequest } from 'next';
 
-// Helper function to get MIME type from file extension
 const getMimeType = (filePath: string): string => {
     const extension = filePath.split('.').pop()?.toLowerCase();
 
@@ -9,31 +7,25 @@ const getMimeType = (filePath: string): string => {
         case 'mp3':
             return 'audio/mpeg';
         case 'ogg':
-        case 'oga': // .oga is often used for ogg voice notes
+        case 'oga':
             return 'audio/ogg';
         case 'wav':
             return 'audio/wav';
         case 'm4a':
             return 'audio/mp4';
         case 'mp4':
-            return 'video/mp4'; // Also works for audio
+            return 'video/mp4';
         default:
-            // A sensible fallback
             return 'application/octet-stream';
     }
 }
 
-type RouteParams = {
-    params: {
-        fileId: string;
-    };
-};
-
 export async function GET(
     request: NextRequest,
-    { params }: RouteParams
+    // The change is on the next line:
+    { params: { fileId } }: { params: { fileId: string } }
 ) {
-    const fileId = params.fileId;
+    // Now you can use 'fileId' directly, no need for the line `const fileId = params.fileId;`
     const botToken = process.env.BOT_TOKEN;
 
     if (!botToken) {
