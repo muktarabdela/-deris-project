@@ -25,8 +25,7 @@ const getMimeType = (filePath: string): string => {
 export async function GET(req: NextRequest, { params }: { params: { fileId: string } }) {
     const fileId = params.fileId;
     const botToken = process.env.BOT_TOKEN;
-    console.log("File ID:", fileId);
-    console.log("Bot Token:", botToken);
+
 
     if (!botToken) {
         return NextResponse.json({ error: "BOT_TOKEN is not configured" }, { status: 500 });

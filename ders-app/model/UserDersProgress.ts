@@ -1,5 +1,4 @@
-import { DersModel } from "./Ders";
-import { UserModel } from "./user";
+
 
 export interface UserDersProgressModel {
     id: string;
@@ -8,8 +7,7 @@ export interface UserDersProgressModel {
     status: string;
     started_at: Date;
     completed_at: Date | null;
-    user: UserModel;
-    ders: DersModel;
+
     createdAt: Date;
     updatedAt: Date;
 }

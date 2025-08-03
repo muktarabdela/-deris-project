@@ -1,5 +1,4 @@
-import { AudioPartModel } from "./AudioPart";
-import { UserModel } from "./user";
+
 
 export interface UserAudioPartProgressModel {
     id: string;
@@ -8,8 +7,7 @@ export interface UserAudioPartProgressModel {
     quiz_score: number | null;
     quiz_attempts: number;
     is_completed: boolean;
-    user: UserModel;
-    audio_part: AudioPartModel;
+
     createdAt: Date;
     updatedAt: Date;
 }
