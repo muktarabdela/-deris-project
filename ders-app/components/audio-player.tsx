@@ -120,7 +120,7 @@ export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) 
             </header>
 
             {/* PDF Viewer */}
-            <main className="flex-1 bg-white overflow-y-auto">
+            <main className="flex-1 bg-white overflow-y-auto max-h-[calc(100vh-64px)]">
                 {pdfUrl ? (
                     <Document
                         file={pdfUrl}

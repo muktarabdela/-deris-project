@@ -5,6 +5,7 @@ import { useData } from '@/context/dataContext';
 import { AudioPlayerWithPdf } from '@/components/audio-player';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
+import { Loading } from '@/components/loading';
 
 export default function FullScreenAudioPlayer() {
     const router = useRouter();
@@ -40,12 +41,7 @@ export default function FullScreenAudioPlayer() {
 
     if (isLoading || loading) {
         return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                    <p>Loading audio...</p>
-                </div>
-            </div>
+            <Loading />
         );
     }
 
@@ -67,7 +63,7 @@ export default function FullScreenAudioPlayer() {
 
     return (
         <div className="min-h-screen bg-background">
-            <div className="container mx-auto px-4 py-6">
+            <div className="container">
                 <button
                     onClick={() => router.push(`/ders/${params.id}`)}
                     className="flex items-center gap-2 text-foreground/80 hover:text-foreground transition-colors mb-6"
@@ -81,7 +77,7 @@ export default function FullScreenAudioPlayer() {
                         {audioPart.title}
                     </h1>
 
-                    <div className="bg-card rounded-2xl p-6 shadow-lg">
+                    <div className="bg-card rounded-xl shadow-lg">
                         <AudioPlayerWithPdf
                             audioPart={audioPart}
                             onComplete={handleComplete}

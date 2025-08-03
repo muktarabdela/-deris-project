@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { NextApiRequest } from 'next';
 
 // Helper function to get MIME type from file extension
 const getMimeType = (filePath: string): string => {
@@ -22,11 +23,17 @@ const getMimeType = (filePath: string): string => {
     }
 }
 
+type RouteParams = {
+    params: {
+        fileId: string;
+    };
+};
+
 export async function GET(
     request: NextRequest,
-    context: { params: { fileId: string } }
+    { params }: RouteParams
 ) {
-    const fileId = context.params.fileId;
+    const fileId = params.fileId;
     const botToken = process.env.BOT_TOKEN;
 
     if (!botToken) {

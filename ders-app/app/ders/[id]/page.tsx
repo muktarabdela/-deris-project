@@ -219,17 +219,6 @@ export default function DersDetailsPage() {
                         >
                             <X className="w-5 h-5" />
                         </button>
-                        {/* <AudioPlayerWithQuiz
-                            audioPart={{
-                                id: selectedAudioPart.id,
-                                title: selectedAudioPart.title,
-                                audioUrl: `/api/audio/${selectedAudioPart.telegram_file_id}`,
-                                duration: selectedAudioPart.duration_in_seconds
-                                    ? `${Math.floor(selectedAudioPart.duration_in_seconds / 60)}:${(selectedAudioPart.duration_in_seconds % 60).toString().padStart(2, '0')}`
-                                    : '0:00',
-                            }}
-                            onComplete={handleClosePlayer}
-                        /> */}
                     </motion.div>
                 </div>
             )}
