@@ -5,6 +5,7 @@ import { Play, Pause, RefreshCcw, RefreshCw, Undo, Redo } from 'lucide-react';
 import { useData } from '@/context/dataContext';
 import { AudioPartModel } from '@/model/AudioPart';
 import { Document, Page, pdfjs } from 'react-pdf';
+// import toast from 'react-hot-toast'; // Import toast
 
 // CSS imports for react-pdf
 import 'react-pdf/dist/Page/AnnotationLayer.css';
@@ -79,18 +80,78 @@ export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) 
         };
     }, [audioPart.id, onComplete]);
 
-    const togglePlayPause = () => {
+    const togglePlayPause = async () => {
         const audio = audioRef.current;
         if (!audio) return;
 
-        if (isPlaying) {
-            audio.pause();
-        } else {
-            // This is now the only place where audio.play() is called
-            audio.play().catch(console.error);
+        try {
+            if (isPlaying) {
+                await audio.pause();
+                setIsPlaying(false);
+            } else {
+                // Ensure the audio source is set and can play
+                if (!audio.src) {
+                    console.error('No audio source available');
+                    return;
+                }
+
+                // Reset the audio if it's already ended
+                if (audio.ended) {
+                    audio.currentTime = 0;
+                }
+
+                const playPromise = audio.play();
+
+                if (playPromise !== undefined) {
+                    await playPromise
+                        .then(() => {
+                            setIsPlaying(true);
+                        })
+                        .catch(error => {
+                            console.error('Error playing audio:', error);
+                            setIsPlaying(false);
+                            // Handle different error cases
+                            if (error.name === 'NotAllowedError') {
+                                // toast.error('Please allow audio playback in your browser settings');
+                            } else if (error.name === 'NotSupportedError') {
+                                // toast.error('This audio format is not supported by your browser');
+                            } else {
+                                // toast.error('Failed to play audio. Please try again.');
+                            }
+                        });
+                }
+            }
+        } catch (error) {
+            console.error('Error in togglePlayPause:', error);
+            setIsPlaying(false);
         }
-        setIsPlaying(!isPlaying);
     };
+
+    useEffect(() => {
+        const audio = audioRef.current;
+        if (!audio) return;
+
+        const handleCanPlay = () => {
+            setIsLoading(false);
+            console.log('Audio can play');
+        };
+
+        const handleError = (e: Event) => {
+            console.error('Audio error:', e);
+            setIsLoading(false);
+            setIsPlaying(false);
+            const error = e as ErrorEvent;
+            // toast.error(`Audio error: ${error.message || 'Failed to load audio'}`);
+        };
+
+        audio.addEventListener('canplay', handleCanPlay);
+        audio.addEventListener('error', handleError);
+
+        return () => {
+            audio.removeEventListener('canplay', handleCanPlay);
+            audio.removeEventListener('error', handleError);
+        };
+    }, [audioPart.audioUrl]);
 
     const handleSeek = (amount: number) => {
         const audio = audioRef.current;

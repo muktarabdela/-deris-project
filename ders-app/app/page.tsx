@@ -38,7 +38,7 @@ export default function Home() {
 
                 // If user doesn't exist, create them
                 if (!user) {
-                    user = await userService.upsertTelegramUser({
+                    await userService.upsertTelegramUser({
                         id: tgUser.id,
                         first_name: tgUser.first_name || "",
                         username: tgUser.username || "",
