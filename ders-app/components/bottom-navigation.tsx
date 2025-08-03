@@ -22,7 +22,7 @@ export function BottomNavigation() {
         },
         {
             name: 'ተቀመጡ የተቀመጡ',
-            path: '/saved',
+            path: '/bookmark',
             icon: <Bookmark className="w-5 h-5" />
         },
     ];

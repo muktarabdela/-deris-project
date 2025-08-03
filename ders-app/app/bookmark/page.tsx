@@ -1,0 +1,134 @@
+"use client";
+
+import { useEffect, useState } from 'react';
+import { useData } from '@/context/dataContext';
+import { getTelegramUser } from '@/lib/utils/telegram';
+import { BookOpen, BookmarkCheck, Play } from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { bookmarkService } from '@/lib/services/bookmark';
+import { Loading } from '@/components/loading';
+import { StartLearningModal } from '@/components/start-learing';
+import { userService } from '@/lib/services/user';
+// import { useToast } from '@/components/ui/use-toast';
+
+export default function BookmarkPage() {
+    const { derses, categories, users, bookMarks, refreshData } = useData();
+    const [isLoading, setIsLoading] = useState(true);
+    // const { toast } = useToast();
+    const tgUser = getTelegramUser();
+    const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
+    const userBookmarks = bookMarks?.filter(b => b.user_id === user?.id);
+    console.log("userBookmarks", userBookmarks);
+    const handleRemoveBookmark = async (dersId: string) => {
+        try {
+            await bookmarkService.delete(dersId);
+            refreshData();
+            // toast({
+            //     title: "Bookmark removed",
+            //     description: "Ders has been removed from your bookmarks.",
+            // });
+        } catch (error) {
+            console.error('Error removing bookmark:', error);
+            // toast({
+            //     title: "Error",
+            //     description: "Failed to remove bookmark.",
+            //     variant: "destructive"
+            // });
+        }
+    };
+
+    const filteredDerses = derses?.filter(ders => userBookmarks?.some(b => b.ders_id === ders.id)) || [];
+    console.log("filteredDerses", filteredDerses);
+    // if (isLoading) {
+    //     return (
+    //         <Loading />
+    //     );
+    // }
+
+    return (
+        <div className="container mx-auto px-4 py-8">
+            <h1 className="text-2xl font-bold mb-8">My Bookmarks</h1>
+
+            {filteredDerses.length === 0 ? (
+                <div className="text-center py-12">
+                    <BookOpen className="mx-auto w-12 h-12 text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-1">No bookmarks yet</h3>
+                    <p className="text-muted-foreground mb-6">Save your favorite derses to access them quickly here.</p>
+                    <Link href="/dashboard">
+                        <Button>Browse Derses</Button>
+                    </Link>
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {filteredDerses.map((ders) => (
+                        <div
+                            key={ders.id}
+                            className="relative group"
+                        >
+                            <div
+                                className="flex flex-col justify-between bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-colors w-60 flex-shrink-0"
+                            >
+                                <button
+                                    className=" absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
+                                    aria-label="Remove from bookmarks"
+                                >
+                                    <BookmarkCheck className="w-5 h-5 text-yellow-500 fill-yellow-500" />
+                                </button>
+                                {/* Top section with info */}
+                                <div className="w-full">
+                                    <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-3 bg-muted">
+                                        {ders.thumbnail_url ? (
+                                            <Image
+                                                src={ders.thumbnail_url}
+                                                alt={ders.title}
+                                                fill
+                                                className="object-cover"
+                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                            />
+                                        ) : (
+                                            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                                <BookOpen className="w-8 h-8 text-primary/50" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full inline-block mb-2">
+                                        {categories.find((cat) => cat.id === ders.category_id)?.name}
+                                    </span>
+                                    <h3 className="font-bold text-foreground line-clamp-1 mb-1">{ders.title}</h3>
+                                    <p className="text-sm text-muted-foreground line-clamp-2 h-10">{ders.description?.slice(0, 40) + '...'}</p>
+                                </div>
+
+                                {/* Bottom section with progress bar */}
+                                <div className="mt-4">
+                                    <StartLearningModal
+                                        dersId={ders.id}
+                                        dersTitle={ders.title}
+                                        userId={user?.id || ""}
+                                        onStartLearning={async (dersId) => {
+                                            if (!user?.id) return false;
+                                            try {
+                                                await userService.startDers(user.id, dersId);
+                                                return true;
+                                            } catch (error) {
+                                                console.error("Error starting ders:", error);
+                                                return false;
+                                            }
+                                        }}
+                                    >
+                                        <Button variant="default">
+                                            <Play className="w-4 h-4 mr-2" />
+                                            መማር  ይጀምሩ
+                                        </Button>
+                                    </StartLearningModal>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )
+            }
+        </div >
+    );
+}

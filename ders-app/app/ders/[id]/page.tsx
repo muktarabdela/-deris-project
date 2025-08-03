@@ -156,7 +156,7 @@ export default function DersDetailsPage() {
                 </h2>
 
                 <div className="space-y-3">
-                    {audioParts?.filter((audioPart) => audioPart.ders_id === ders.id)
+                    {audioParts?.filter((audioPart) => audioPart.ders_id === ders.id && audioPart.is_published)
                         .sort((a, b) => a.order - b.order)
                         .map((part, index) => (
                             <div

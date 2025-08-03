@@ -9,6 +9,7 @@ const TABLE_NAME = 'bookmarks';
 export const bookmarkService = {
     // Create a new bookmark
     async create(bookmark: CreateBookmarkInput): Promise<BookmarkModel> {
+        console.log(bookmark);
         const { data, error } = await supabase
             .from(TABLE_NAME)
             .insert(bookmark)
