@@ -22,10 +22,12 @@ const getMimeType = (filePath: string): string => {
     }
 }
 
-export async function GET(req: NextRequest, { params }: { params: { fileId: string } }) {
-    const fileId = params.fileId;
+export async function GET(
+    request: NextRequest,
+    context: { params: { fileId: string } }
+) {
+    const fileId = context.params.fileId;
     const botToken = process.env.BOT_TOKEN;
-
 
     if (!botToken) {
         return NextResponse.json({ error: "BOT_TOKEN is not configured" }, { status: 500 });

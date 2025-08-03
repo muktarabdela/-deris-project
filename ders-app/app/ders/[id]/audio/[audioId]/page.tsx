@@ -2,7 +2,7 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useData } from '@/context/dataContext';
-import { AudioPlayerWithQuiz } from '@/components/audio-player';
+import { AudioPlayerWithPdf } from '@/components/audio-player';
 import { useEffect, useState } from 'react';
 import { ArrowLeft } from 'lucide-react';
 
@@ -14,10 +14,8 @@ export default function FullScreenAudioPlayer() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Only proceed if audioParts is loaded
         if (loading) return;
 
-        // Find the audio part by ID
         const part = audioParts?.find(part => part.id === params.audioId);
 
         if (part) {
@@ -29,7 +27,6 @@ export default function FullScreenAudioPlayer() {
                     : '0:00',
             });
         } else if (audioParts?.length > 0) {
-            // Only redirect if we've loaded audio parts but didn't find a match
             router.push(`/ders/${params.id}`);
         }
 
@@ -37,7 +34,7 @@ export default function FullScreenAudioPlayer() {
     }, [params.audioId, audioParts, loading, router, params.id]);
 
     const handleComplete = () => {
-        // Go back to the ders page when audio is completed
+
         router.push(`/ders/${params.id}`);
     };
 
@@ -85,10 +82,9 @@ export default function FullScreenAudioPlayer() {
                     </h1>
 
                     <div className="bg-card rounded-2xl p-6 shadow-lg">
-                        <AudioPlayerWithQuiz
+                        <AudioPlayerWithPdf
                             audioPart={audioPart}
                             onComplete={handleComplete}
-                            fullScreen={true}
                         />
                     </div>
                 </div>
