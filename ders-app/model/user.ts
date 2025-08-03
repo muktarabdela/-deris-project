@@ -15,7 +15,11 @@ export interface UserModel {
     role: UserRole;
     points: number;
     current_ders_id: string | null;
-
+    preferences: {
+        dark_mode: boolean;
+        notifications: boolean;
+        language: string;
+    };
     createdAt: Date;
     updatedAt: Date;
 }

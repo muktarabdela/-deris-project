@@ -154,10 +154,10 @@ export default function ProfilePage() {
             {/* Telegram Integration */}
             <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">
                 <h3 className="font-medium">Telegram Integration</h3>
-                {user.telegram_username ? (
+                {user.username ? (
                     <div className="flex items-center justify-between">
                         <div className="text-sm text-muted-foreground">
-                            Connected as @{user.telegram_username}
+                            Connected as @{user.username}
                         </div>
                         <Button variant="outline" size="sm">
                             Change
