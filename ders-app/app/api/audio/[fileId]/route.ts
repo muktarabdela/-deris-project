@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Helper function to get MIME type from file extension
 const getMimeType = (filePath: string): string => {
     const extension = filePath.split('.').pop()?.toLowerCase();
 
@@ -20,12 +21,15 @@ const getMimeType = (filePath: string): string => {
     }
 }
 
-export async function GET(
-    request: NextRequest,
-    // The change is on the next line:
-    { params: { fileId } }: { params: { fileId: string } }
-) {
-    // Now you can use 'fileId' directly, no need for the line `const fileId = params.fileId;`
+// Define a clear interface for the context object
+interface RouteContext {
+    params: {
+        fileId: string;
+    };
+}
+
+export async function GET(request: NextRequest, context: RouteContext) {
+    const { fileId } = context.params; // Destructure here to get the fileId
     const botToken = process.env.BOT_TOKEN;
 
     if (!botToken) {

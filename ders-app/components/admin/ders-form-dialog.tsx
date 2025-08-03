@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -40,9 +41,6 @@ import { UstadhModel } from '@/model/Ustadh';
 import { CategoryModel } from '@/model/Category';
 import { useData } from '@/context/dataContext';
 
-
-
-
 interface DersFormDialogProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
@@ -53,6 +51,10 @@ interface DersFormDialogProps {
 export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: DersFormDialogProps) {
     const { derses, ustadhs, categories, error, refreshData } = useData();
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState(0);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const supabase = createClientComponentClient();
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
     const form = useForm<DersModel>({
@@ -146,6 +148,65 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
         return Object.keys(errors).length === 0;
     };
 
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type and size (max 10MB)
+        if (file.type !== 'application/pdf') {
+            toast.error('Please upload a valid PDF file');
+            return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            toast.error('File size should be less than 10MB');
+            return;
+        }
+
+        setSelectedFile(file);
+        setUploading(true);
+        setUploadProgress(0);
+
+        // Generate a unique file name
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        try {
+            const { data, error } = await supabase.storage
+                .from('pdf-storage')
+                .upload(filePath, file, {
+                    cacheControl: '3600',
+                    upsert: false,
+                });
+
+            if (error) {
+                console.error('Error uploading file:', error);
+                if (error.message.includes('The resource already exists')) {
+                    throw new Error('A file with this name already exists. Please rename your file and try again.');
+                }
+                throw error;
+            }
+
+            // Get the public URL
+            const { data: { publicUrl } } = supabase
+                .storage
+                .from('pdf-storage')
+                .getPublicUrl(filePath);
+
+            // Update the form field with the URL
+            form.setValue('book_pdf_url', publicUrl);
+            toast.success('PDF uploaded successfully!');
+        } catch (error: any) {
+            console.error('Error uploading file:', error);
+            toast.error(error.message || 'Failed to upload PDF');
+            setSelectedFile(null);
+            form.setValue('book_pdf_url', '');
+        } finally {
+            setUploading(false);
+            setUploadProgress(0);
+        }
+    };
+
     const onSubmit = async (data: DersModel) => {
         if (!validateForm(data)) {
             return;
@@ -198,11 +259,6 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                         <FormControl>
                                             <Input placeholder="Enter ders title" {...field} value={field.value || ''} className={formErrors.title ? "border-destructive" : ""} />
                                         </FormControl>
-                                        {/* {formErrors.title && (
-                                            <p className="text-sm font-medium text-destructive">
-                                                {formErrors.title}
-                                            </p>
-                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -222,11 +278,6 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                                 className={formErrors.description ? "border-destructive" : ""}
                                             />
                                         </FormControl>
-                                        {/* {formErrors.description && (
-                                            <p className="text-sm font-medium text-destructive">
-                                                {formErrors.description}
-                                            </p>
-                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -253,11 +304,6 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                             </SelectContent>
 
                                         </Select>
-                                        {/* {formErrors.ustadh_id && (
-                                            <p className="text-sm font-medium text-destructive">
-                                                {formErrors.ustadh_id}
-                                            </p>
-                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -283,11 +329,6 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                                 ))}
                                             </SelectContent>
                                         </Select>
-                                        {/* {formErrors.category_id && (
-                                            <p className="text-sm font-medium text-destructive">
-                                                {formErrors.category_id}
-                                            </p>
-                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -300,13 +341,8 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                     <FormItem>
                                         <FormLabel>Thumbnail URL</FormLabel>
                                         <FormControl>
-                                            <Input placeholder="https://example.com/thumbnail.jpg" {...field} value={field.value || ''} onChange={field.onChange} className={formErrors.thumbnail_url ? "border-destructive" : ""} />
+                                            <Input placeholder="https://example.com/thumbnail.jpg" {...field} value={field.value || ''} className={formErrors.thumbnail_url ? "border-destructive" : ""} />
                                         </FormControl>
-                                        {/* {formErrors.thumbnail_url && (
-                                            <p className="text-sm font-medium text-destructive">
-                                                {formErrors.thumbnail_url}
-                                            </p>
-                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -317,15 +353,60 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                 name="book_pdf_url"
                                 render={({ field }) => (
                                     <FormItem>
-                                        <FormLabel>Book PDF URL</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="https://example.com/book.pdf" {...field} value={field.value || ''} onChange={field.onChange} className={formErrors.book_pdf_url ? "border-destructive" : ""} />
-                                        </FormControl>
-                                        {/* {formErrors.book_pdf_url && (
-                                            <p className="text-sm font-medium text-destructive">
-                                                {formErrors.book_pdf_url}
-                                            </p>
-                                        )} */}
+                                        <FormLabel>Book PDF</FormLabel>
+                                        <div className="space-y-2">
+                                            <div className="flex items-center space-x-2">
+                                                <label className="flex flex-col items-center px-4 py-2 bg-white text-blue-600 rounded-lg tracking-wide border border-blue cursor-pointer hover:bg-blue-50 transition-colors">
+                                                    <span className="text-sm font-medium">
+                                                        {selectedFile ? 'Change PDF File' : 'Choose PDF File'}
+                                                    </span>
+                                                    <input
+                                                        type="file"
+                                                        className="hidden"
+                                                        accept=".pdf,application/pdf"
+                                                        onChange={handleFileUpload}
+                                                        disabled={uploading}
+                                                    />
+                                                </label>
+                                                {selectedFile && (
+                                                    <span className="text-sm text-gray-600 truncate max-w-xs">
+                                                        {selectedFile.name}
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            {uploading && (
+                                                <div className="w-full space-y-1">
+                                                    <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                                                        <div
+                                                            className="h-full bg-blue-600 rounded-full transition-all duration-300 ease-out"
+                                                            style={{ width: `${uploadProgress}%` }}
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-gray-500 text-right">
+                                                        {uploadProgress}% Uploading...
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {field.value && !uploading && (
+                                                <div className="flex items-center space-x-2 text-sm text-green-600">
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                    </svg>
+                                                    <span>PDF ready for submission</span>
+                                                    <a
+                                                        href={field.value}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:underline ml-2"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        (Preview)
+                                                    </a>
+                                                </div>
+                                            )}
+                                        </div>
                                         <FormMessage />
                                     </FormItem>
                                 )}
@@ -338,13 +419,8 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                                     <FormItem>
                                         <FormLabel>Display Order</FormLabel>
                                         <FormControl>
-                                            <Input type="number" min={0} {...field} value={field.value || ''} onChange={field.onChange} className={formErrors.order ? "border-destructive" : ""} />
+                                            <Input type="number" min={0} {...field} value={field.value || ''} className={formErrors.order ? "border-destructive" : ""} />
                                         </FormControl>
-                                        {/* {formErrors.order && (
-                                            <p className="text-sm font-medium text-destructive">
-                                                {formErrors.order}
-                                            </p>
-                                        )} */}
                                         <FormMessage />
                                     </FormItem>
                                 )}
