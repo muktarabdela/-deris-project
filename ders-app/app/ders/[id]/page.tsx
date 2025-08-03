@@ -2,60 +2,19 @@
 
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { BookOpen, Play, Check, Clock, FileText, ArrowLeft } from 'lucide-react';
+import { BookOpen, Play, Check, Clock, FileText, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
+import { useData } from '@/context/dataContext';
+import { AudioPartModel } from '@/model/AudioPart';
+import { useState } from 'react';
+import { AudioPlayerWithQuiz } from '@/components/audio-player';
 
-type AudioPart = {
-    id: string;
-    title: string;
-    duration: string;
-    isCompleted: boolean;
-    audioUrl?: string;
-};
-
-type Ders = {
-    id: string;
-    title: string;
-    description: string;
-    category: string;
-    totalParts: number;
-    completedParts: number;
-    pdfUrl?: string;
-    audioParts: AudioPart[];
-    createdAt: string;
-    updatedAt: string;
-};
-
-// Mock data - in a real app, this would be fetched from an API based on the ID
-const getDersData = (id: string): Ders | null => {
-    const mockDers: Record<string, Ders> = {
-        '1': {
-            id: '1',
-            title: 'Introduction to Tajweed',
-            description: 'Learn the basics of proper Quranic recitation with this comprehensive guide to Tajweed rules. This ders covers the fundamental principles that every student of the Quran should know.',
-            category: 'Tajweed',
-            totalParts: 6,
-            completedParts: 2,
-            pdfUrl: '/sample.pdf',
-            audioParts: [
-                { id: '1-1', title: 'Introduction to Makharij', duration: '5:32', isCompleted: true },
-                { id: '1-2', title: 'The Rules of Noon Sakinah', duration: '7:45', isCompleted: true },
-                { id: '1-3', title: 'Meem Sakinah Rules', duration: '6:18', isCompleted: false },
-                { id: '1-4', title: 'Qalqalah Letters', duration: '4:52', isCompleted: false },
-                { id: '1-5', title: 'Madd Letters', duration: '8:15', isCompleted: false },
-                { id: '1-6', title: 'Practice Session', duration: '10:00', isCompleted: false },
-            ],
-            createdAt: '2025-07-15T10:30:00Z',
-            updatedAt: '2025-07-20T14:45:00Z',
-        },
-    };
-
-    return mockDers[id] || null;
-};
 
 export default function DersDetailsPage() {
+    const { derses, error, refreshData, users, categories, loading, audioParts } = useData();
     const params = useParams();
-    const ders = getDersData(params.id as string);
+    const ders = derses?.find((ders) => ders.id === params.id);
+    const [selectedAudioPart, setSelectedAudioPart] = useState<AudioPartModel | null>(null);
 
     if (!ders) {
         return (
@@ -70,15 +29,19 @@ export default function DersDetailsPage() {
 
     const progressPercentage = Math.round((ders.completedParts / ders.totalParts) * 100);
 
-    const handlePlayAudio = (audioPart: AudioPart) => {
-        // In a real app, this would play the audio
-        console.log('Playing:', audioPart.title);
-        // After audio finishes, you would mark it as completed
+    const handlePlayAudio = (audioPart: AudioPartModel) => {
+        // Only allow playing if a telegram_file_id is present
+        if (audioPart.telegram_file_id) {
+            setSelectedAudioPart(audioPart);
+        }
     };
-
+    const handleClosePlayer = () => {
+        setSelectedAudioPart(null);
+        // You can optionally refresh data or mark part as completed here
+    };
     const handleOpenPdf = () => {
-        if (ders.pdfUrl) {
-            window.open(ders.pdfUrl, '_blank');
+        if (ders.book_pdf_url) {
+            window.open(ders.book_pdf_url, '_blank');
         }
     };
 
@@ -167,7 +130,8 @@ export default function DersDetailsPage() {
                 </motion.div>
             )}
 
-            {/* Audio Parts */}
+
+            {/* Audio Parts - Updated Logic */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -179,54 +143,82 @@ export default function DersDetailsPage() {
                 </h2>
 
                 <div className="space-y-3">
-                    {ders.audioParts.map((part, index) => (
-                        <div
-                            key={part.id}
-                            onClick={() => !part.isCompleted && handlePlayAudio(part)}
-                            className={`p-4 rounded-xl border ${part.isCompleted
-                                ? 'border-green-500/20 bg-green-500/5'
-                                : 'border-border hover:border-primary/50 cursor-pointer hover:bg-accent/50'
-                                } transition-colors`}
-                        >
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div
-                                        className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${part.isCompleted
-                                            ? 'bg-green-500/10 text-green-500'
-                                            : 'bg-primary/10 text-primary'
-                                            }`}
-                                    >
-                                        {part.isCompleted ? (
-                                            <Check className="w-5 h-5" />
-                                        ) : (
-                                            <Play className="w-5 h-5" />
-                                        )}
-                                    </div>
-                                    <div>
-                                        <h3 className="font-medium text-foreground">
-                                            {index + 1}. {part.title}
-                                        </h3>
-                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                            <Clock className="w-3.5 h-3.5" />
-                                            <span>{part.duration}</span>
-                                            {part.isCompleted && (
-                                                <span className="text-green-500 text-xs font-medium bg-green-500/10 px-2 py-0.5 rounded-full">
-                                                    Completed
-                                                </span>
-                                            )}
+                    {audioParts?.filter((audioPart) => audioPart.ders_id === ders.id)
+                        .sort((a, b) => a.order - b.order) // Ensure parts are in order
+                        .map((part, index) => (
+                            <div
+                                key={part.id}
+                                onClick={() => handlePlayAudio(part)}
+                                className={`p-4 rounded-xl border ${part.is_published
+                                    ? 'border-green-500/20 bg-green-500/5'
+                                    : 'border-border hover:border-primary/50 cursor-pointer hover:bg-accent/50'
+                                    } transition-colors ${!part.telegram_file_id ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            >
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                        <div
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${part.is_published
+                                                ? 'bg-green-500/10 text-green-500'
+                                                : 'bg-primary/10 text-primary'
+                                                }`}
+                                        >
+                                            {part.is_published ? <Check className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                                        </div>
+                                        <div>
+                                            <h3 className="font-medium text-foreground">
+                                                {index + 1}. {part.title}
+                                            </h3>
+                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                <Clock className="w-3.5 h-3.5" />
+                                                {part.duration_in_seconds ? (
+                                                    <span>
+                                                        {Math.floor(part.duration_in_seconds / 60)}:{(part.duration_in_seconds % 60).toString().padStart(2, '0')}
+                                                    </span>
+                                                ) : (
+                                                    <span>-</span>
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
+                                    {part.telegram_file_id && !part.is_published && (
+                                        <button className="text-primary hover:bg-primary/10 p-2 rounded-full">
+                                            <Play className="w-4 h-4" />
+                                        </button>
+                                    )}
                                 </div>
-                                {!part.isCompleted && (
-                                    <button className="text-primary hover:bg-primary/10 p-2 rounded-full">
-                                        <Play className="w-4 h-4" />
-                                    </button>
-                                )}
                             </div>
-                        </div>
-                    ))}
+                        ))}
                 </div>
             </motion.div>
+
+            {/* Audio Player Modal */}
+            {selectedAudioPart && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="bg-background border border-border rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto relative"
+                    >
+                        <button
+                            onClick={handleClosePlayer}
+                            className="absolute top-4 right-4 text-muted-foreground hover:text-foreground z-10"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        <AudioPlayerWithQuiz
+                            audioPart={{
+                                id: selectedAudioPart.id,
+                                title: selectedAudioPart.title,
+                                audioUrl: `/api/audio/${selectedAudioPart.telegram_file_id}`,
+                                duration: selectedAudioPart.duration_in_seconds
+                                    ? `${Math.floor(selectedAudioPart.duration_in_seconds / 60)}:${(selectedAudioPart.duration_in_seconds % 60).toString().padStart(2, '0')}`
+                                    : '0:00',
+                            }}
+                            onComplete={handleClosePlayer}
+                        />
+                    </motion.div>
+                </div>
+            )}
         </div>
     );
 }

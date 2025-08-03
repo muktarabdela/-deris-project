@@ -34,14 +34,14 @@ type Ders = {
 
 
 export default function DashboardPage() {
-    const { derses, error, refreshData, users, categories, loading } = useData();
+    const { derses, error, refreshData, users, categories, loading, audioParts } = useData();
 
     const tgUser = getTelegramUser();
 
     const router = useRouter();
 
     const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
-    console.log("user", user);
+
     const activeDers = derses?.find((ders) => ders.id === user?.current_ders_id);
     const userName = user?.first_name;
     const userLevel = "Beginner";
@@ -149,10 +149,10 @@ export default function DashboardPage() {
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="text-xs font-medium px-2 py-0.5 bg-primary/10 text-primary rounded-full">
-                                            {activeDers.category}
+                                            {categories?.find((category) => category.id === activeDers.category_id)?.name}
                                         </span>
                                         <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                            <Clock className="w-3 h-3" /> {activeDers.duration}
+                                            <Clock className="w-3 h-3" /> {audioParts?.find((audioPart) => audioPart.ders_id === activeDers.id)?.duration_in_seconds}
                                         </span>
                                     </div>
                                     <h3 className="font-bold text-foreground">{activeDers.title}</h3>
@@ -171,7 +171,7 @@ export default function DashboardPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap">
+                                <button className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors whitespace-nowrap" onClick={() => router.push(`/ders/${activeDers.id}`)}>
                                     መማር ይቀጥሉ
                                 </button>
                             </div>
