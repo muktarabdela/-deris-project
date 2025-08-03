@@ -7,7 +7,6 @@ import Link from 'next/link';
 import { useData } from '@/context/dataContext';
 import { AudioPartModel } from '@/model/AudioPart';
 import { useState } from 'react';
-import { AudioPlayerWithQuiz } from '@/components/audio-player';
 
 
 export default function DersDetailsPage() {
