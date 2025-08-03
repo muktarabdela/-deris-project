@@ -28,8 +28,9 @@ interface RouteContext {
     };
 }
 
-export async function GET(request: NextRequest, context: RouteContext) {
-    const { fileId } = context.params; // Destructure here to get the fileId
+export async function GET(request: NextRequest, { params }: { params: Promise<{ fileId: string }> }) {
+
+    const { fileId } = await params;
     const botToken = process.env.BOT_TOKEN;
 
     if (!botToken) {
