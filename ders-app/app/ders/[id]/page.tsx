@@ -16,6 +16,21 @@ export default function DersDetailsPage() {
     const ders = derses?.find((ders) => ders.id === params.id);
     const [selectedAudioPart, setSelectedAudioPart] = useState<AudioPartModel | null>(null);
 
+    const totalPart = audioParts?.filter((audioPart) => audioPart.ders_id === ders?.id).length || 0;
+
+    // Calculate completed parts for the active ders
+    const completedParts = userAudioProgress?.filter(
+        progress => audioParts?.some(ap =>
+            ap.id === progress.audio_part_id &&
+            ap.ders_id === ders?.id &&
+            progress.is_completed
+        )
+    ).length || 0;
+
+    // Calculate progress percentage
+    const progressPercentage = totalPart > 0 ? Math.round((completedParts / totalPart) * 100) : 0;
+
+
     if (!ders) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen">
@@ -27,12 +42,11 @@ export default function DersDetailsPage() {
         );
     }
 
-    const progressPercentage = Math.round((userAudioProgress?.filter((progress) => progress.audio_part_id === ders.id).length || 0) * 100);
-
     const handlePlayAudio = (audioPart: AudioPartModel) => {
         // Only allow playing if a telegram_file_id is present
         if (audioPart.telegram_file_id) {
-            setSelectedAudioPart(audioPart);
+            // Navigate to the full-screen audio player
+            window.location.href = `/ders/${params.id}/audio/${audioPart.id}`;
         }
     };
     const handleClosePlayer = () => {
@@ -84,10 +98,10 @@ export default function DersDetailsPage() {
                 <div className="flex justify-between items-center mb-2">
                     <h2 className="text-lg font-semibold text-foreground">Your Progress</h2>
                     <span className="text-sm text-muted-foreground">
-                        {userAudioProgress?.filter((progress) => progress.audio_part_id === ders.id).length || 0} of {audioParts?.length || 0} parts
+                        {completedParts} of {totalPart} parts
                     </span>
                 </div>
-                <div className="w-full bg-muted rounded-full h-3">
+                <div className="w-full bg-primary/20 rounded-full h-3">
                     <div
                         className="bg-primary h-3 rounded-full transition-all duration-500"
                         style={{ width: `${progressPercentage}%` }}
@@ -144,7 +158,7 @@ export default function DersDetailsPage() {
 
                 <div className="space-y-3">
                     {audioParts?.filter((audioPart) => audioPart.ders_id === ders.id)
-                        .sort((a, b) => a.order - b.order) // Ensure parts are in order
+                        .sort((a, b) => a.order - b.order)
                         .map((part, index) => (
                             <div
                                 key={part.id}
@@ -205,7 +219,7 @@ export default function DersDetailsPage() {
                         >
                             <X className="w-5 h-5" />
                         </button>
-                        <AudioPlayerWithQuiz
+                        {/* <AudioPlayerWithQuiz
                             audioPart={{
                                 id: selectedAudioPart.id,
                                 title: selectedAudioPart.title,
@@ -215,7 +229,7 @@ export default function DersDetailsPage() {
                                     : '0:00',
                             }}
                             onComplete={handleClosePlayer}
-                        />
+                        /> */}
                     </motion.div>
                 </div>
             )}

@@ -22,9 +22,10 @@ type AudioPart = {
 type AudioPlayerProps = {
     audioPart: AudioPart;
     onComplete: () => void;
+    fullScreen?: boolean;
 };
 
-export function AudioPlayerWithQuiz({ audioPart, onComplete }: AudioPlayerProps) {
+export function AudioPlayerWithQuiz({ audioPart, onComplete, fullScreen = false }: AudioPlayerProps) {
     const [isPlaying, setIsPlaying] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
@@ -64,14 +65,24 @@ export function AudioPlayerWithQuiz({ audioPart, onComplete }: AudioPlayerProps)
         audio.addEventListener('ended', handleEnded);
 
         // Start playing automatically
-        audio.play().then(() => setIsPlaying(true)).catch(console.error);
+        if (!fullScreen) {
+            audio.play().then(() => setIsPlaying(true)).catch(console.error);
+        }
 
         return () => {
             audio.removeEventListener('timeupdate', updateTime);
             audio.removeEventListener('loadedmetadata', updateDuration);
             audio.removeEventListener('ended', handleEnded);
         };
-    }, [audioPart.id, onComplete, quizQuestions.length]);
+    }, [audioPart.id, onComplete, quizQuestions.length, fullScreen]);
+
+    useEffect(() => {
+        if (fullScreen && audioRef.current) {
+            audioRef.current.play().catch(error => {
+                console.error("Auto-play failed:", error);
+            });
+        }
+    }, [fullScreen]);
 
     const togglePlay = () => {
         const audio = audioRef.current;
@@ -124,15 +135,17 @@ export function AudioPlayerWithQuiz({ audioPart, onComplete }: AudioPlayerProps)
     const isLastQuestion = currentQuestionIndex === quizQuestions.length - 1;
 
     return (
-        <div className="space-y-8 p-4 md:p-6">
+        <div className={`space-y-8 p-4 md:p-6 ${fullScreen ? 'max-w-4xl mx-auto' : ''}`}>
             {/* Audio Player */}
-            <div className="bg-card rounded-2xl p-6 border border-border">
-                <h2 className="text-xl font-bold text-foreground mb-4">{audioPart.title}</h2>
+            <div className={`bg-card rounded-2xl p-6 border border-border ${fullScreen ? 'shadow-lg' : ''}`}>
+                <h2 className={`${fullScreen ? 'text-2xl' : 'text-xl'} font-bold text-foreground mb-4`}>
+                    {audioPart.title}
+                </h2>
 
                 <div className="flex items-center gap-4 mb-4">
                     <button
                         onClick={togglePlay}
-                        className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary/90 transition-colors"
+                        className="w-12 h-12 rounded-full bg-primary flex items-center justify-center text-white hover:bg-primary/90 transition-colors flex-shrink-0"
                     >
                         {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 ml-0.5" />}
                     </button>
@@ -142,9 +155,9 @@ export function AudioPlayerWithQuiz({ audioPart, onComplete }: AudioPlayerProps)
                             <span>{formatTime(currentTime)}</span>
                             <span>{audioPart.duration}</span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-1.5">
+                        <div className="w-full bg-muted rounded-full h-2">
                             <div
-                                className="bg-primary h-1.5 rounded-full transition-all duration-300"
+                                className="bg-primary h-2 rounded-full transition-all duration-300"
                                 style={{
                                     width: duration ? `${(currentTime / duration) * 100}%` : '0%'
                                 }}
@@ -155,9 +168,8 @@ export function AudioPlayerWithQuiz({ audioPart, onComplete }: AudioPlayerProps)
 
                 <audio
                     ref={audioRef}
-                    src={audioPart.audioUrl} // Use the passed URL directly
+                    src={audioPart.audioUrl}
                     className="hidden"
-                // autoPlay // You can enable this to start playing as soon as the modal opens
                 />
             </div>
 

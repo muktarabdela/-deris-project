@@ -10,27 +10,7 @@ import { BookOpen, Award, Clock, Play, ChevronRight, Flame, Check } from 'lucide
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { JSX, useEffect, useState } from 'react';
 import { Loading } from '@/components/loading';
-
-interface UserProfile {
-    id: string;
-    first_name: string;
-    username: string;
-    profile_picture_url: string;
-}
-
-type Ders = {
-    id: string;
-    title: string;
-    description: string;
-    progress: number;
-    totalParts: number;
-    completedParts: number;
-    duration: string;
-    category: string;
-    isPopular: boolean;
-};
 
 
 export default function DashboardPage() {
