@@ -151,7 +151,7 @@ export default function QuizzesPage() {
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex flex-col">
-                                        <span>{quiz.description}</span>
+                                        <span>{quiz.description?.slice(0, 40) + '...'}</span>
                                     </div>
                                 </TableCell>
                                 <TableCell className="text-right">

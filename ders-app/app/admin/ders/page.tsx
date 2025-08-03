@@ -150,7 +150,7 @@ export default function DersPage() {
                                         <div className="space-y-1">
                                             <div className="font-medium">{ders.title}</div>
                                             <div className="text-sm text-muted-foreground line-clamp-1">
-                                                {ders.description}
+                                                {ders.description?.slice(0, 40) + '...'}
                                             </div>
                                         </div>
                                     </TableCell>

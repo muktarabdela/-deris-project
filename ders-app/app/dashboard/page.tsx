@@ -139,7 +139,7 @@ export default function DashboardPage() {
                                         </span>
                                     </div>
                                     <h3 className="font-bold text-foreground">{activeDers.title}</h3>
-                                    <p className="text-sm text-muted-foreground mb-2">{activeDers.description}</p>
+                                    <p className="text-sm text-muted-foreground mb-2">{activeDers.description?.slice(0, 40) + '...'}</p>
 
                                     <div className="space-y-1">
                                         <div className="flex justify-between text-xs text-muted-foreground">
@@ -221,7 +221,7 @@ export default function DashboardPage() {
                                             {categories.find((cat) => cat.id === ders.category_id)?.name}
                                         </span>
                                         <h3 className="font-bold text-foreground line-clamp-1 mb-1">{ders.title}</h3>
-                                        <p className="text-sm text-muted-foreground line-clamp-2 h-10">{ders.description}</p>
+                                        <p className="text-sm text-muted-foreground line-clamp-2 h-10">{ders.description?.slice(0, 40) + '...'}</p>
                                     </div>
 
                                     {/* Bottom section with progress bar */}
@@ -312,7 +312,7 @@ export default function DashboardPage() {
                                     {categories.find((cat) => cat.id === ders.category_id)?.name}
                                 </span>
                                 <h3 className="font-bold text-foreground line-clamp-1 mb-1">{ders.title}</h3>
-                                <p className="text-sm text-muted-foreground line-clamp-2 h-10">{ders.description}</p>
+                                <p className="text-sm text-muted-foreground line-clamp-2 h-10">{ders.description?.slice(0, 40) + '...'}</p>
                             </div>
 
                             {/* Bottom section with progress bar */}

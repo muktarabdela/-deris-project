@@ -83,6 +83,7 @@ export default function CategoryPage() {
     const filteredCategories = categories?.filter((category) =>
         category.name.toLowerCase().includes(searchQuery.toLowerCase())
     );
+    // lets create function for tuntract descrion
     return (
         <div className="space-y-6">
             <div className="flex flex-col justify-between space-y-4 sm:flex-row sm:items-center sm:space-y-0">
@@ -134,7 +135,7 @@ export default function CategoryPage() {
                                         {category.name}
                                     </TableCell>
                                     <TableCell className="max-w-[200px] truncate">
-                                        {category.description}
+                                        {category.description?.slice(0, 50) + '...'}
                                     </TableCell>
                                     <TableCell>{derses?.filter((der) => der.category_id === category.id).length}</TableCell>
                                     <TableCell>
