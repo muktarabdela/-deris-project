@@ -134,12 +134,6 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
             errors.thumbnail_url = "Please enter a valid URL or leave it empty.";
         }
 
-        if (data.book_pdf_url?.trim() === "") {
-            errors.book_pdf_url = "Please enter a valid URL or leave it empty.";
-        } else if (!validateUrl(data.book_pdf_url?.trim() || '')) {
-            errors.book_pdf_url = "Please enter a valid URL or leave it empty.";
-        }
-
         if (data.order === 0) {
             errors.order = "Please enter a valid order.";
         }
