@@ -55,8 +55,8 @@ export default function BookmarkPage() {
                     <BookOpen className="mx-auto w-12 h-12 text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium mb-1">No bookmarks yet</h3>
                     <p className="text-muted-foreground mb-6">Save your favorite derses to access them quickly here.</p>
-                    <Link href="/dashboard">
-                        <Button>Browse Derses</Button>
+                    <Link href="/all-ders">
+                        <Button>ደርሶችን ይፈልጉ</Button>
                     </Link>
                 </div>
             ) : (

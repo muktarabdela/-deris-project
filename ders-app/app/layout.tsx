@@ -1,11 +1,9 @@
+import "./globals.css";
 import type { Metadata } from "next";
 import { Noto_Sans_Ethiopic } from 'next/font/google';
-import "./globals.css";
 import { ThemeProvider } from "@/hooks/theme-provider";
-import { ThemeToggle } from "@/components/theme-toggle";
-import { ProfileButton } from "@/components/profile-button";
+
 import { AuthProvider } from "@/context/authContext";
-import { AppContent } from "@/components/app-content";
 import { ConditionalLayoutWrapper } from "@/components/conditional-layout-wrapper";
 import { DataProvider } from "@/context/dataContext";
 
@@ -19,7 +17,8 @@ export const viewport = {
 
 const noto = Noto_Sans_Ethiopic({
     subsets: ['ethiopic'],
-    weight: ['400', '700']
+    weight: ['600', '700'],
+    variable: '--font-noto',
 });
 
 export const metadata: Metadata = {
