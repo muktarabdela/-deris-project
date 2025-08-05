@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from '@/components/ui/button';
-import { User, Settings, LogOut, Flame, Bell, Moon, Sun, Languages, ChevronRight } from 'lucide-react';
+import { User, Settings, LogOut, Flame, Bell, Moon, Sun, Languages, ChevronRight, Crown } from 'lucide-react';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useRouter } from 'next/navigation';
@@ -13,7 +13,7 @@ import { Loading } from '@/components/loading';
 
 
 export default function ProfilePage() {
-    const { users, refreshData, loading } = useData();
+    const { users, refreshData, loading, derses } = useData();
     const tgUser = getTelegramUser();
 
     const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
@@ -40,6 +40,8 @@ export default function ProfilePage() {
             </div>
         );
     }
+
+    const actvieDers = derses?.find((ders) => ders.id === user.current_ders_id);
 
     const updatePreference = async (key: string, value: any) => {
         if (!user) return;
@@ -92,19 +94,28 @@ export default function ProfilePage() {
                         )}
 
                         {/* Streak Counter */}
-                        <div className="flex items-center justify-center gap-2 text-amber-500">
-                            <Flame className="h-4 w-4" />
-                            <span className="text-sm font-medium">0 day streak</span>
+                        <div className="flex items-center justify-center gap-2 text-primary">
+                            <Crown className="h-4 w-4" />
+                            <span className="text-sm font-medium">{user.points} Points</span>
                         </div>
                     </div>
                 </div>
             </div>
             {/* current active ders */}
             <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">
-
-                <h3 className="font-medium flex items-center gap-2">
-
+                <h3 className="font-medium flex items-center gap-2 flex-col">
+                    <div className="flex items-center gap-2">
+                        Current Active Ders
+                    </div>
+                    <span className="text-sm text-muted-foreground flex items-center gap-2">{actvieDers?.title}</span>
                 </h3>
+
+                <div className="space-y-4">
+                    <p className="text-sm text-muted-foreground">if you wnat to change your active ders, please go to the dashboard</p>
+                    <Button variant="outline" className="w-full" onClick={() => router.push('/dashboard')}>
+                        change ders
+                    </Button>
+                </div>
             </div>
 
 
@@ -157,30 +168,6 @@ export default function ProfilePage() {
                         </select>
                     </div>
                 </div>
-            </div>
-
-            {/* Telegram Integration */}
-            <div className="bg-card rounded-xl shadow-sm p-6 space-y-4">
-                <h3 className="font-medium">Telegram Integration</h3>
-                {user.username ? (
-                    <div className="flex items-center justify-between">
-                        <div className="text-sm text-muted-foreground">
-                            Connected as @{user.username}
-                        </div>
-                        <Button variant="outline" size="sm">
-                            Change
-                        </Button>
-                    </div>
-                ) : (
-                    <div className="space-y-2">
-                        <p className="text-sm text-muted-foreground">
-                            Connect your Telegram account to receive notifications and track your progress.
-                        </p>
-                        <Button size="sm" className="w-full">
-                            Connect Telegram
-                        </Button>
-                    </div>
-                )}
             </div>
 
             {/* back to dashboard Button */}

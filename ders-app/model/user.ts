@@ -15,6 +15,7 @@ export interface UserModel {
     role: UserRole;
     points: number;
     current_ders_id: string | null;
+    ders_History: string[];
     is_onboarding_completed: boolean;
     preferences: {
         dark_mode: boolean;

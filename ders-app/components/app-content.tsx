@@ -7,8 +7,10 @@ import { BottomNavigation } from '@/components/bottom-navigation';
 const NAVIGATION_ROUTES = [
     '/dashboard',
     '/leaderboard',
-    '/saved',
+    '/bookmark',
     '/ders',
+    '/all-ders',
+    '/profile',
     // Add other routes where bottom navigation should appear
 ];
 

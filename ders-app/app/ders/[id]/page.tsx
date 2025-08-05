@@ -7,17 +7,24 @@ import Link from 'next/link';
 import { useData } from '@/context/dataContext';
 import { AudioPartModel } from '@/model/AudioPart';
 import { useState } from 'react';
+import { getActiveCourses } from '@/lib/utils/util';
+import { getTelegramUser } from '@/lib/utils/telegram';
+import { StartLearningModal } from '@/components/start-learing';
+import { userService } from '@/lib/services/user';
+import { Button } from '@/components/ui/button';
 
 
 export default function DersDetailsPage() {
     const { derses, error, refreshData, users, userAudioProgress, userDersProgress, loading, audioParts, categories } = useData();
     const params = useParams();
+    const tgUser = getTelegramUser();
     const ders = derses?.find((ders) => ders.id === params.id);
+
     const [selectedAudioPart, setSelectedAudioPart] = useState<AudioPartModel | null>(null);
 
     const totalPart = audioParts?.filter((audioPart) => audioPart.ders_id === ders?.id).length || 0;
+    const user = users?.find((user) => Number(user.telegram_user_id) === Number(params.userId));
 
-    // Calculate completed parts for the active ders
     const completedParts = userAudioProgress?.filter(
         progress => audioParts?.some(ap =>
             ap.id === progress.audio_part_id &&
@@ -29,6 +36,13 @@ export default function DersDetailsPage() {
     // Calculate progress percentage
     const progressPercentage = totalPart > 0 ? Math.round((completedParts / totalPart) * 100) : 0;
 
+    const activeCourses = userDersProgress?.find((progress) => progress.ders_id === ders?.id && progress.status === 'IN_PROGRESS');
+
+    const completedAudioPartIds = new Set(
+        userAudioProgress
+            ?.filter(progress => progress.is_completed)
+            .map(progress => progress.audio_part_id)
+    );
 
     if (!ders) {
         return (
@@ -42,20 +56,12 @@ export default function DersDetailsPage() {
     }
 
     const handlePlayAudio = (audioPart: AudioPartModel) => {
-        // Only allow playing if a telegram_file_id is present
         if (audioPart.telegram_file_id) {
-            // Navigate to the full-screen audio player
             window.location.href = `/ders/${params.id}/audio/${audioPart.id}`;
         }
     };
     const handleClosePlayer = () => {
         setSelectedAudioPart(null);
-        // You can optionally refresh data or mark part as completed here
-    };
-    const handleOpenPdf = () => {
-        if (ders.book_pdf_url) {
-            window.open(ders.book_pdf_url, '_blank');
-        }
     };
 
     return (
@@ -88,61 +94,27 @@ export default function DersDetailsPage() {
             </motion.header>
 
             {/* Progress */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.1 }}
-                className="mb-8"
-            >
-                <div className="flex justify-between items-center mb-2">
-                    <h2 className="text-lg font-semibold text-foreground">Your Progress</h2>
-                    <span className="text-sm text-muted-foreground">
-                        {completedParts} of {totalPart} parts
-                    </span>
-                </div>
-                <div className="w-full bg-primary/20 rounded-full h-3">
-                    <div
-                        className="bg-primary h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${progressPercentage}%` }}
-                    />
-                </div>
-            </motion.div>
-
-            {/* PDF Preview */}
-            {ders.book_pdf_url && (
+            {activeCourses && (
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.3, delay: 0.2 }}
-                    className="mb-10"
+                    transition={{ duration: 0.3, delay: 0.1 }}
+                    className="mb-8"
                 >
-                    <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-blue-500" />
-                        Study Material
-                    </h2>
-                    <div className="border border-border rounded-xl p-4 bg-card">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                                    <BookOpen className="w-6 h-6 text-blue-500" />
-                                </div>
-                                <div>
-                                    <h3 className="font-medium text-foreground">Ders Notes</h3>
-                                    <p className="text-sm text-muted-foreground">PDF Document</p>
-                                </div>
-                            </div>
-                            <button
-                                onClick={handleOpenPdf}
-                                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors flex items-center gap-2"
-                            >
-                                <BookOpen className="w-4 h-4" />
-                                Open Book
-                            </button>
-                        </div>
+                    <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-lg font-semibold text-foreground">Your Progress</h2>
+                        <span className="text-sm text-muted-foreground">
+                            {completedParts} of {totalPart} parts
+                        </span>
+                    </div>
+                    <div className="w-full bg-primary/20 rounded-full h-3">
+                        <div
+                            className="bg-primary h-3 rounded-full transition-all duration-500"
+                            style={{ width: `${progressPercentage}%` }}
+                        />
                     </div>
                 </motion.div>
             )}
-
 
             {/* Audio Parts - Updated Logic */}
             <motion.div
@@ -156,53 +128,65 @@ export default function DersDetailsPage() {
                 </h2>
 
                 <div className="space-y-3">
-                    {audioParts?.filter((audioPart) => audioPart.ders_id === ders.id && audioPart.is_published)
+                    {audioParts
+                        ?.filter((audioPart) => audioPart.ders_id === ders.id && audioPart.is_published)
                         .sort((a, b) => a.order - b.order)
-                        .map((part, index) => (
-                            <div
-                                key={part.id}
-                                onClick={() => handlePlayAudio(part)}
-                                className={`p-4 rounded-xl border ${part.is_published
-                                    ? 'border-green-500/20 bg-green-500/5'
-                                    : 'border-border hover:border-primary/50 cursor-pointer hover:bg-accent/50'
-                                    } transition-colors ${!part.telegram_file_id ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                <div className="flex items-center justify-between">
-                                    <div className="flex items-center gap-3">
-                                        <div
-                                            className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${part.is_published
-                                                ? 'bg-green-500/10 text-green-500'
-                                                : 'bg-primary/10 text-primary'
-                                                }`}
-                                        >
-                                            {part.is_published ? <Check className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-foreground">
-                                                {index + 1}. {part.title}
-                                            </h3>
-                                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                                <Clock className="w-3.5 h-3.5" />
-                                                {part.duration_in_seconds ? (
-                                                    <span>
-                                                        {Math.floor(part.duration_in_seconds / 60)}:{(part.duration_in_seconds % 60).toString().padStart(2, '0')}
-                                                    </span>
-                                                ) : (
-                                                    <span>-</span>
-                                                )}
+                        .map((part, index) => {
+                            const isCompleted = completedAudioPartIds.has(part.id);
+                            const isPlayable = !!part.telegram_file_id;
+
+                            return (
+                                <div
+                                    key={part.id}
+                                    onClick={() => isPlayable && handlePlayAudio(part)}
+                                    className={`
+            p-4 rounded-xl border cursor-pointer transition-colors 
+            ${isCompleted
+                                            ? 'bg-green-100 border-green-300'
+                                            : 'hover:bg-accent/50 border-border'} 
+            ${!isPlayable ? 'opacity-50 cursor-not-allowed' : ''}
+          `}
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCompleted ? 'bg-green-600/10 text-green-600' : 'bg-primary/10 text-primary'
+                                                }`}>
+                                                {isCompleted ? <Check className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                                            </div>
+                                            <div>
+                                                <h3 className="font-medium text-foreground">
+                                                    {index + 1}. {part.title}
+                                                </h3>
+                                                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                                    <Clock className="w-3.5 h-3.5" />
+                                                    {part.duration_in_seconds ? (
+                                                        <span>
+                                                            {Math.floor(part.duration_in_seconds / 60)}:
+                                                            {(part.duration_in_seconds % 60).toString().padStart(2, '0')}
+                                                        </span>
+                                                    ) : (
+                                                        <span>-</span>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
+                                        {!isCompleted && isPlayable && (
+                                            <button className="text-primary hover:bg-primary/10 p-2 rounded-full">
+                                                <Play className="w-4 h-4" />
+                                            </button>
+                                        )}
+                                        {isCompleted && (
+                                            <span className="text-xs px-2 py-1 rounded-full bg-green-200 text-green-800 font-semibold">
+                                                Completed
+                                            </span>
+                                        )}
                                     </div>
-                                    {part.telegram_file_id && !part.is_published && (
-                                        <button className="text-primary hover:bg-primary/10 p-2 rounded-full">
-                                            <Play className="w-4 h-4" />
-                                        </button>
-                                    )}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                 </div>
             </motion.div>
+
 
             {/* Audio Player Modal */}
             {selectedAudioPart && (
@@ -219,6 +203,30 @@ export default function DersDetailsPage() {
                             <X className="w-5 h-5" />
                         </button>
                     </motion.div>
+                </div>
+            )}
+            {!activeCourses && (
+                <div className="mt-4">
+                    <StartLearningModal
+                        dersId={ders.id}
+                        dersTitle={ders.title}
+                        userId={user?.id || ""}
+                        onStartLearning={async (dersId) => {
+                            if (!user?.id) return false;
+                            try {
+                                await userService.startDers(user.id, dersId);
+                                return true;
+                            } catch (error) {
+                                console.error("Error starting ders:", error);
+                                return false;
+                            }
+                        }}
+                    >
+                        <Button variant="default">
+                            <Play className="w-4 h-4 mr-2" />
+                            መማር  ይጀምሩ
+                        </Button>
+                    </StartLearningModal>
                 </div>
             )}
         </div>

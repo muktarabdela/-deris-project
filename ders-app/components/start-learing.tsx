@@ -46,7 +46,7 @@ export function StartLearningModal({
             const success = await onStartLearning(dersId);
             if (success) {
                 toast.success(`Started learning ${dersTitle}`);
-                // router.push(`/ders/${dersId}`);
+                router.push(`/ders/${dersId}`);
                 refreshData();
             }
         } catch (error) {

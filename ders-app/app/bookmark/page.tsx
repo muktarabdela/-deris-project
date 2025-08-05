@@ -61,67 +61,72 @@ export default function BookmarkPage() {
                     </Link>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-2 gap-6">
                     {filteredDerses.map((ders) => (
                         <div
                             key={ders.id}
-                            className="relative group"
+                            className="relative group h-full"
                         >
                             <div
-                                className="flex flex-col justify-between bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-colors w-60 flex-shrink-0"
+                                className="flex flex-col h-full bg-card rounded-xl border border-border hover:border-primary/50 transition-colors overflow-hidden"
                             >
-                                <button
-                                    className=" absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
-                                    aria-label="Remove from bookmarks"
-                                >
-                                    <BookmarkCheck className="w-5 h-5 text-yellow-500 fill-yellow-500" />
-                                </button>
-                                {/* Top section with info */}
-                                <div className="w-full">
-                                    <div className="relative w-full aspect-video rounded-lg overflow-hidden mb-3 bg-muted">
-                                        {ders.thumbnail_url ? (
-                                            <Image
-                                                src={ders.thumbnail_url}
-                                                alt={ders.title}
-                                                fill
-                                                className="object-cover"
-                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                                                <BookOpen className="w-8 h-8 text-primary/50" />
-                                            </div>
-                                        )}
-                                    </div>
-                                    <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full inline-block mb-2">
-                                        {categories.find((cat) => cat.id === ders.category_id)?.name}
-                                    </span>
-                                    <h3 className="font-bold text-foreground line-clamp-1 mb-1">{ders.title}</h3>
-                                    <p className="text-sm text-muted-foreground line-clamp-2 h-10">{ders.description?.slice(0, 40) + '...'}</p>
+                                <div className="relative w-full aspect-video bg-muted">
+                                    {ders.thumbnail_url ? (
+                                        <Image
+                                            src={ders.thumbnail_url}
+                                            alt={ders.title}
+                                            fill
+                                            className="object-cover"
+                                            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                            <BookOpen className="w-8 h-8 text-primary/50" />
+                                        </div>
+                                    )}
                                 </div>
-
-                                {/* Bottom section with progress bar */}
-                                <div className="mt-4">
-                                    <StartLearningModal
-                                        dersId={ders.id}
-                                        dersTitle={ders.title}
-                                        userId={user?.id || ""}
-                                        onStartLearning={async (dersId) => {
-                                            if (!user?.id) return false;
-                                            try {
-                                                await userService.startDers(user.id, dersId);
-                                                return true;
-                                            } catch (error) {
-                                                console.error("Error starting ders:", error);
-                                                return false;
-                                            }
-                                        }}
-                                    >
-                                        <Button variant="default">
-                                            <Play className="w-4 h-4 mr-2" />
-                                            መማር  ይጀምሩ
-                                        </Button>
-                                    </StartLearningModal>
+                                <div className="p-4 flex-1 flex flex-col">
+                                    <div className="flex justify-between items-start mb-2">
+                                        <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full">
+                                            {categories.find((cat) => cat.id === ders.category_id)?.name}
+                                        </span>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleRemoveBookmark(ders.id);
+                                            }}
+                                            className=" p-1 rounded-full bg-white/90 hover:bg-white transition-colors shadow-md hover:shadow-lg z-10"
+                                            aria-label="Remove from bookmarks"
+                                        >
+                                            <BookmarkCheck className="w-5 h-5 text-primary fill-primary" />
+                                        </button>
+                                    </div>
+                                    <h3 className="font-bold text-foreground line-clamp-1 mb-2">{ders.title}</h3>
+                                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 flex-1">
+                                        {ders.description?.slice(0, 60) + (ders.description?.length > 60 ? '...' : '')}
+                                    </p>
+                                    <div className="flex justify-between items-center mt-auto">
+                                        <StartLearningModal
+                                            dersId={ders.id}
+                                            dersTitle={ders.title}
+                                            userId={user?.id || ""}
+                                            onStartLearning={async (dersId) => {
+                                                if (!user?.id) return false;
+                                                try {
+                                                    await userService.startDers(user.id, dersId);
+                                                    return true;
+                                                } catch (error) {
+                                                    console.error("Error starting ders:", error);
+                                                    return false;
+                                                }
+                                            }}
+                                        >
+                                            <Button variant="default">
+                                                <Play className="w-4 h-4 mr-2" />
+                                                መማር  ይጀምሩ
+                                            </Button>
+                                        </StartLearningModal>
+                                    </div>
                                 </div>
                             </div>
                         </div>

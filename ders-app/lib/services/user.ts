@@ -101,9 +101,27 @@ export const userService = {
     },
     async startDers(userId: string, dersId: string): Promise<boolean> {
         try {
-            // Step 1: Fetch all audio part IDs for the given ders
+            // First, get the current user to check existing ders_History
+            const { data: userData, error: userError } = await supabase
+                .from(TABLE_NAME)
+                .select('ders_History')
+                .eq('id', userId)
+                .single();
+
+            if (userError) {
+                console.error('Error fetching user data:', userError);
+                throw new Error(userError.message);
+            }
+
+            // Initialize ders_History if it doesn't exist
+            const currentHistory = userData?.ders_History || [];
+            // Add the new dersId if it's not already in the history
+            const updatedHistory = currentHistory.includes(dersId)
+                ? currentHistory
+                : [...currentHistory, dersId];
+
             const { data: audioParts, error: audioPartsError } = await supabase
-                .from('audio_parts') // Use your actual table name for Audio Parts
+                .from('audio_parts')
                 .select('id')
                 .eq('ders_id', dersId);
 
@@ -113,13 +131,11 @@ export const userService = {
             }
 
             if (!audioParts || audioParts.length === 0) {
-                // If there are no audio parts, we still start the ders but log a warning.
                 console.warn(`Ders with ID ${dersId} has no associated audio parts.`);
             }
 
-            // Step 2: Create the UserDersProgress record
             const { error: dersProgressError } = await supabase
-                .from('user_ders_progress')     // Use your actual table name
+                .from('user_ders_progress')
                 .insert([
                     {
                         user_id: userId,
@@ -135,13 +151,11 @@ export const userService = {
                 throw new Error(dersProgressError.message);
             }
 
-            // Step 3: Create UserAudioPartProgress records for each audio part
             if (audioParts && audioParts.length > 0) {
                 const newUserAudioPartProgresses = audioParts.map((part) => ({
                     user_id: userId,
                     audio_part_id: part.id,
                     is_completed: false,
-                    completedAt: new Date().toISOString(),
                     quiz_attempts: 0,
                 }));
 
@@ -151,20 +165,21 @@ export const userService = {
 
                 if (audioProgressError) {
                     console.error('Error creating user audio part progresses:', audioProgressError);
-                    // Note: In a real-world scenario, you might want to roll back the previous insert here.
-                    // Using a database transaction or an RPC function in Supabase is ideal for this.
                     throw new Error(audioProgressError.message);
                 }
             }
 
-            // Step 4: Update the user's current_ders_id
+            // Update both current_ders_id and ders_History
             const { error: updateUserError } = await supabase
                 .from(TABLE_NAME)
-                .update({ current_ders_id: dersId })
+                .update({
+                    current_ders_id: dersId,
+                    ders_History: updatedHistory
+                })
                 .eq('id', userId);
 
             if (updateUserError) {
-                console.error('Error updating user\'s current ders:', updateUserError);
+                console.error('Error updating user\'s current ders and history:', updateUserError);
                 throw new Error(updateUserError.message);
             }
 
