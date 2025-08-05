@@ -111,9 +111,9 @@ export default function ProfilePage() {
                 </h3>
 
                 <div className="space-y-4">
-                    <p className="text-sm text-muted-foreground">if you wnat to change your active ders, please go to the dashboard</p>
-                    <Button variant="outline" className="w-full" onClick={() => router.push('/dashboard')}>
-                        change ders
+                    <p className="text-sm text-muted-foreground">አዲስ ደርስ ለመጀመር ወደ ዋናው ማውጫ ይሂዱ።</p>
+                    <Button variant="outline" className="w-full" onClick={() => router.push('/all-ders')}>
+                        ደርስ ይቀይሩ
                     </Button>
                 </div>
             </div>

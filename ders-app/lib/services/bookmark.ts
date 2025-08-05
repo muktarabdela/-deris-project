@@ -69,11 +69,11 @@ export const bookmarkService = {
         return data;
     },
     // Delete a bookmark
-    async delete(id: string): Promise<void> {
+    async delete(dersId: string): Promise<void> {
         const { error } = await supabase
             .from(TABLE_NAME)
             .delete()
-            .eq('id', id);
+            .eq('ders_id', dersId);
 
         if (error) {
             console.error('Error deleting bookmark:', error);

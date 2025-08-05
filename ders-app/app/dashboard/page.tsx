@@ -84,8 +84,6 @@ export default function DashboardPage() {
                 await bookmarkService.create({
                     user_id: user?.id || '',
                     ders_id: dersId,
-                    // createdAt: new Date(),
-                    // updatedAt: new Date(),
                 });
                 refreshData();
                 // toast({

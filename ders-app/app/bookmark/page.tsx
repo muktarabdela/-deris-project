@@ -20,7 +20,7 @@ export default function BookmarkPage() {
     const tgUser = getTelegramUser();
     const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
     const userBookmarks = bookMarks?.filter(b => b.user_id === user?.id);
-    console.log("userBookmarks", userBookmarks);
+
     const handleRemoveBookmark = async (dersId: string) => {
         try {
             await bookmarkService.delete(dersId);
@@ -40,7 +40,6 @@ export default function BookmarkPage() {
     };
 
     const filteredDerses = derses?.filter(ders => userBookmarks?.some(b => b.ders_id === ders.id)) || [];
-    console.log("filteredDerses", filteredDerses);
     // if (isLoading) {
     //     return (
     //         <Loading />
