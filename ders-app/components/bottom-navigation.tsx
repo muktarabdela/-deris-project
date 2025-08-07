@@ -3,7 +3,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Trophy, Bookmark } from 'lucide-react';
+import { Home, Trophy, Bookmark, BookOpen } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export function BottomNavigation() {
@@ -21,9 +21,14 @@ export function BottomNavigation() {
             icon: <Trophy className="w-5 h-5" />
         },
         {
-            name: 'ተቀመጡ የተቀመጡ',
+            name: 'መረጃዎች',
             path: '/bookmark',
             icon: <Bookmark className="w-5 h-5" />
+        },
+        {
+            name: 'ተቀመጡ የተቀመጡ',
+            path: '/all-ders',
+            icon: <BookOpen className="w-5 h-5" />
         },
     ];
 

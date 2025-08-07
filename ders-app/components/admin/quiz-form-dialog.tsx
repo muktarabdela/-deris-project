@@ -91,18 +91,11 @@ export function QuizFormDialog({
             return;
         }
         try {
-            const now = new Date();
-            const quizData = {
-                ...values,
-                createdAt: now,
-                updatedAt: now
-            };
             setIsSubmitting(true);
             if (quiz) {
-                const { createdAt, ...updateData } = quizData;
-                await quizService.update(quiz.id, updateData);
+                await quizService.update(quiz.id, values);
             } else {
-                await quizService.create(quizData);
+                await quizService.create(values);
             }
             onSuccess();
             toast.success("Quiz saved successfully");

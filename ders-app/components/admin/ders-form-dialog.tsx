@@ -207,17 +207,11 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
         }
         try {
             setLoading(true);
-            const now = new Date();
-            const dersData = {
-                ...data,
-                createdAt: now,
-                updatedAt: now
-            };
             if (ders) {
-                await dersService.update(ders.id, dersData);
+                await dersService.update(ders.id, data);
                 toast.success('Ders updated successfully');
             } else {
-                await dersService.create(dersData);
+                await dersService.create(data);
                 toast.success('Ders created successfully');
             }
 

@@ -90,19 +90,10 @@ export function UstadhFormDialog({
 
         try {
             setIsSubmitting(true);
-            const now = new Date();
-            const ustadhData = {
-                ...data,
-                createdAt: now,
-                updatedAt: now
-            };
-
             if (ustadh) {
-                // For updates, we don't want to modify the createdAt field
-                const { createdAt, ...updateData } = ustadhData;
-                await ustadhService.update(ustadh.id, updateData);
+                await ustadhService.update(ustadh.id, data);
             } else {
-                await ustadhService.create(ustadhData);
+                await ustadhService.create(data);
             }
 
             onSuccess();

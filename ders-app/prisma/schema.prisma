@@ -92,6 +92,26 @@ model Ders {
   @@map("derses") // Changed to plural for consistency
 }
 
+model ShortDers {
+  id                String    @id @default(uuid()) @db.Uuid
+  title             String
+  description       String
+  is_published      Boolean   @default(false)
+  order             Int       @default(0)
+
+  ustadh_id         String   @db.Uuid
+  
+  category_id       String   @db.Uuid
+  category          Category  @relation(fields: [category_id], references: [id])
+  
+  telegram_file_id      String?
+
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@map("short_derses")
+}
+
 model AudioPart {
   id                    String    @id @default(uuid()) @db.Uuid
   title                 String

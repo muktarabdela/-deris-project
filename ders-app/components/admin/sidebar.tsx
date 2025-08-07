@@ -11,6 +11,7 @@ const navItems = [
     { name: 'Users', href: '/admin/users', icon: Users },
     { name: 'Ustadhs', href: '/admin/ustadhs', icon: User },
     { name: 'Ders', href: '/admin/ders', icon: BookOpen },
+    { name: 'Short Derses', href: '/admin/short-ders', icon: BookOpen },
     { name: 'Audio Parts', href: '/admin/audio-part', icon: FileAudio },
     { name: 'Quizzes', href: '/admin/quiz', icon: BookOpen },
     { name: 'Quiz Questions', href: '/admin/quiz-question', icon: BookOpen },

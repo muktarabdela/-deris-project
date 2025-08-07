@@ -6,10 +6,10 @@ async function setupBot() {
     console.log("Setting up bot commands...");
 
     // Set the commands that will appear in the menu
-    await bot.api.setMyCommands([
-        { command: "start", description: "🚀 Start the Deris app" },
-        { command: "file", description: "🆔 Get a file_id from an audio" },
-    ]);
+    // await bot.api.setMyCommands([
+    //     { command: "start", description: "🚀 Start the Deris app" },
+    //     { command: "file", description: "🆔 Get a file_id from an audio" },
+    // ]);
 
     console.log("Bot commands have been set.");
 

@@ -3,7 +3,7 @@
 import { useData } from '@/context/dataContext';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { BookmarkPlus, BookmarkCheck, Filter, X, Search, Play } from 'lucide-react';
+import { BookmarkPlus, BookmarkCheck, Filter, X, Search, Play, Pause } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -16,46 +16,80 @@ import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loading } from '@/components/loading';
 
+
 export default function AllDersPage() {
     const router = useRouter();
-    const { derses, categories, ustadhs, bookMarks, loading, refreshData, users } = useData();
+    const { derses, shortDerses, categories, loading, error, refreshData, bookMarks, users } = useData();
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
     const [showFilters, setShowFilters] = useState(false);
     const [filteredDerses, setFilteredDerses] = useState(derses);
-
+    const [filteredShortDerses, setFilteredShortDerses] = useState(shortDerses);
+    const [activeTab, setActiveTab] = useState('all');
     const tgUser = getTelegramUser();
     const user = users?.find((u) => Number(u.telegram_user_id) === tgUser?.id);
     const bookMarkedDerses = bookMarks?.filter((b) => b.user_id === user?.id);
 
+
+
     useEffect(() => {
-        let result = [...derses];
+        if (activeTab === 'all') {
+            let result = [...derses];
 
-        if (searchTerm) {
-            const term = searchTerm.toLowerCase();
-            result = result.filter(ders =>
-                ders.title.toLowerCase().includes(term) ||
-                ders.description?.toLowerCase().includes(term)
-            );
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                result = result.filter(ders =>
+                    ders.title.toLowerCase().includes(term) ||
+                    ders.description?.toLowerCase().includes(term)
+                );
+            }
+
+            if (selectedCategories.length > 0) {
+                result = result.filter(ders =>
+                    selectedCategories.includes(ders.category_id)
+                );
+            }
+
+            setFilteredDerses(result);
+        } else if (activeTab === 'short-ders') {
+            let result = [...shortDerses];
+
+            if (searchTerm) {
+                const term = searchTerm.toLowerCase();
+                result = result.filter(shortDers =>
+                    shortDers.title.toLowerCase().includes(term) ||
+                    shortDers.description?.toLowerCase().includes(term)
+                );
+            }
+
+            if (selectedCategories.length > 0) {
+                result = result.filter(ders =>
+                    selectedCategories.includes(ders.category_id)
+                );
+            }
+
+            setFilteredShortDerses(result);
         }
-
-        if (selectedCategories.length > 0) {
-            result = result.filter(ders =>
-                selectedCategories.includes(ders.category_id)
-            );
-        }
-
-        setFilteredDerses(result);
-    }, [searchTerm, selectedCategories, derses]);
+    }, [searchTerm, selectedCategories, derses, shortDerses, activeTab]);
 
     const toggleCategory = (categoryId: string) => {
-        setSelectedCategories(prev =>
-            prev.includes(categoryId)
-                ? prev.filter(id => id !== categoryId)
-                : [...prev, categoryId]
-        );
+        if (activeTab === 'all') {
+            setSelectedCategories(prev =>
+                prev.includes(categoryId)
+                    ? prev.filter(id => id !== categoryId)
+                    : [...prev, categoryId]
+            );
+        } else if (activeTab === 'short-ders') {
+            setSelectedCategories(prev =>
+                prev.includes(categoryId)
+                    ? prev.filter(id => id !== categoryId)
+                    : [...prev, categoryId]
+            );
+        }
     };
-
+    useEffect(() => {
+        console.log('shortDerses from context:', shortDerses);
+    }, [shortDerses]);
     const toggleBookmark = async (dersId: string) => {
         if (!user?.id) return;
 
@@ -159,12 +193,14 @@ export default function AllDersPage() {
             <Tabs defaultValue="all" className="mb-8">
                 <TabsList className="mb-8">
                     <TabsTrigger
+                        onClick={() => setActiveTab('all')}
                         value="all"
                         className="data-[state=active]:bg-primary rounded-md px-4 py-2 transition-all"
                     >
                         ሁሉም
                     </TabsTrigger>
                     <TabsTrigger
+                        onClick={() => setActiveTab('short-ders')}
                         value="short-ders"
                         className="data-[state=active]:bg-primary rounded-md px-4 py-2 transition-all"
                     >
@@ -272,10 +308,10 @@ export default function AllDersPage() {
                 <TabsContent value="short-ders">
                     <div className="mb-4">
                         <p className="text-sm text-muted-foreground mb-4">
-                            {filteredDerses.length} {filteredDerses.length === 1 ? 'ders' : 'derses'} found
+                            {filteredShortDerses.length} {filteredShortDerses.length === 1 ? 'ders' : 'derses'} found
                         </p>
 
-                        {filteredDerses.length === 0 ? (
+                        {filteredShortDerses.length === 0 ? (
                             <div className="text-center py-12">
                                 <p className="text-muted-foreground">No derses found matching your filters.</p>
                                 <Button variant="outline" onClick={clearFilters} className="mt-4">
@@ -284,7 +320,7 @@ export default function AllDersPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-2   gap-6">
-                                {filteredDerses.map((ders) => {
+                                {filteredShortDerses.map((ders) => {
                                     const isBookmarked = bookMarkedDerses?.some(b => b.ders_id === ders.id);
                                     const category = categories.find(c => c.id === ders.category_id);
 
@@ -307,7 +343,7 @@ export default function AllDersPage() {
                                                 )}
                                             </button>
                                             <div className="flex flex-col justify-between bg-card rounded-xl border border-border p-5 hover:border-primary/50 transition-colors h-full">
-                                                <div className="w-full" onClick={() => router.push(`/ders/${ders.id}`)}>
+                                                <div className="w-full">
                                                     {category && (
                                                         <span className="text-xs font-medium px-2 py-1 bg-primary/10 text-primary rounded-full inline-block mb-2">
                                                             {category.name}
@@ -322,7 +358,6 @@ export default function AllDersPage() {
                                                 <div className="mt-4">
                                                     <Button variant="default" className="w-full">
                                                         <Play className="w-4 h-4 mr-2" />
-                                                        አስጀምር
                                                     </Button>
                                                 </div>
                                             </div>

@@ -84,16 +84,10 @@ export function CategoryFormDialog({
         try {
 
             setIsSubmitting(true);
-            const now = new Date();
-            const categoryData = {
-                ...data,
-                createdAt: now,
-                updatedAt: now
-            };
             if (category) {
-                await categoryService.update(category.id, categoryData);
+                await categoryService.update(category.id, data);
             } else {
-                await categoryService.create(categoryData);
+                await categoryService.create(data);
             }
             onSuccess();
             toast.success("Category saved successfully");
