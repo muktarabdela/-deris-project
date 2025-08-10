@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { AdminFormDialog } from "@/components/admin/admin-form-dialog";
 import { Badge } from "@/components/ui/badge";
+import AdminChangePasswordFormDialog from "@/components/admin/admin-change-password-form-dialog";
 
 export default function Admins() {
     const { admins, refreshData, loading } = useData()
@@ -31,7 +32,9 @@ export default function Admins() {
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [editingAdmin, setEditingAdmin] = useState<AdminModel | null>(null)
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+
+    const [changePasswordAdmin, setChangePasswordAdmin] = useState<AdminModel | null>(null)
+    const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false)
     const stats = [
         { title: 'Total Admins', value: admins.length.toString(), icon: Users },
     ]
@@ -56,13 +59,16 @@ export default function Admins() {
         setEditingAdmin(admin);
         setIsDialogOpen(true);
     };
+    const handlePasswordChange = (admin: AdminModel) => {
+        setChangePasswordAdmin(admin);
+        setIsPasswordDialogOpen(true);
+    };
     const handleAddAdmin = () => {
         setEditingAdmin(null);
         setIsDialogOpen(true);
     };
     const handleSuccess = async () => {
         try {
-            setIsLoading(true);
             refreshData();
             setIsDialogOpen(false);
             setEditingAdmin(null);
@@ -70,7 +76,6 @@ export default function Admins() {
             console.error('Error refreshing admins:', error);
             toast.error('Failed to refresh admins list');
         } finally {
-            setIsLoading(false);
         }
     };
     if (loading) {
@@ -178,6 +183,10 @@ export default function Admins() {
                                                     <Edit className="mr-2 h-4 w-4" />
                                                     Edit
                                                 </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handlePasswordChange(admin)}>
+                                                    <Edit className="mr-2 h-4 w-4" />
+                                                    Change Password
+                                                </DropdownMenuItem>
                                                 <DropdownMenuItem
                                                     className="text-destructive"
                                                     onClick={() => handleDelete(admin.id)}
@@ -209,6 +218,11 @@ export default function Admins() {
                 onOpenChange={setIsDialogOpen}
                 admin={editingAdmin}
                 onSuccess={handleSuccess}
+            />
+            <AdminChangePasswordFormDialog
+                open={isPasswordDialogOpen}
+                onOpenChange={setIsPasswordDialogOpen}
+                admin={changePasswordAdmin}
             />
         </div>
     );

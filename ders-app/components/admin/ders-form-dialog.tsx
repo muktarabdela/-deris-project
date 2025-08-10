@@ -57,12 +57,12 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
     const supabase = createClientComponentClient();
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
-    const form = useForm<DersModel>({
+    const form = useForm<DersModel & { book_pdf_url?: string | null }>({
         defaultValues: {
             title: '',
             description: '',
             thumbnail_url: '',
-            book_pdf_url: '',
+            book_pdf_url: null,
             is_published: false,
             order: 0,
             ustadh_id: '',
@@ -77,7 +77,7 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                 title: ders.title,
                 description: ders.description,
                 thumbnail_url: ders.thumbnail_url || '',
-                book_pdf_url: ders.book_pdf_url || '',
+                book_pdf_url: ders.book_pdf_url || null,
                 is_published: ders.is_published,
                 order: ders.order,
                 ustadh_id: ders.ustadh_id,
@@ -89,7 +89,7 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
                     title: '',
                     description: '',
                     thumbnail_url: '',
-                    book_pdf_url: '',
+                    book_pdf_url: null,
                     is_published: false,
                     order: 0,
                     ustadh_id: '',
@@ -99,7 +99,7 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
         }
     }, [ders, open]);
 
-    const validateForm = (data: DersModel) => {
+    const validateForm = (data: DersModel & { book_pdf_url?: string | null }) => {
         const errors: Record<string, string> = {};
 
         // Required field validation
@@ -201,7 +201,7 @@ export default function DersFormDialog({ open, onOpenChange, ders, onSuccess }: 
         }
     };
 
-    const onSubmit = async (data: DersModel) => {
+    const onSubmit = async (data: DersModel & { book_pdf_url?: string | null }) => {
         if (!validateForm(data)) {
             return;
         }
