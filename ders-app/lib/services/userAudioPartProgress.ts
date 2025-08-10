@@ -79,4 +79,23 @@ export const userAudioPartProgressService = {
             throw new Error(error.message);
         }
     },
+    // update is_completed
+    async updateIsCompleted(id: string, isCompleted: boolean): Promise<UserAudioPartProgressModel> {
+        const { data: updatedAudioPart, error } = await supabase
+            .from(TABLE_NAME)
+            .update({
+                is_completed: isCompleted,
+                completedAt: new Date().toISOString(),
+            })
+            .eq('audio_part_id', id)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error updating audio part:', error);
+            throw new Error(error.message);
+        }
+
+        return updatedAudioPart;
+    },
 };

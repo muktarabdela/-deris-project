@@ -51,7 +51,6 @@ export const userService = {
 
         if (error) throw error;
     },
-
     // create a function to get user by id
     async getUserByTelegramUserId(telegramUserId: number) {
         try {
@@ -245,6 +244,19 @@ export const userService = {
             return { data, updated: true };
         } catch (error) {
             console.error('Error updating user:', error);
+            throw error;
+        }
+    },
+    async updatePoints(userId: string, points: number) {
+        try {
+            const { error } = await supabase
+                .from(TABLE_NAME)
+                .update({ points })
+                .eq('id', userId);
+
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error updating points:', error);
             throw error;
         }
     },

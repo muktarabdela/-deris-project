@@ -9,6 +9,8 @@ import { Document, Page, pdfjs } from 'react-pdf';
 // CSS imports for react-pdf
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import Quiz from './quiz';
+import { Button } from './ui/button';
 
 // Setting up the PDF worker
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.mjs`;
@@ -24,12 +26,14 @@ type AudioPlayerProps = {
 
 // Renamed component for clarity since quiz functionality is removed
 export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) {
+    const { userAudioProgress } = useData()
+    const audioProgress = userAudioProgress.find(progress => progress.audio_part_id === audioPart.id)?.is_completed
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [currentTime, setCurrentTime] = useState(0);
     const [numPages, setNumPages] = useState<number | null>(null);
     const [pdfError, setPdfError] = useState<string | null>(null);
-
+    const [quizOpen, setQuizOpen] = useState(false);
     const formatDuration = (seconds: number) => {
         const minutes = Math.floor(seconds / 60);
         const remainingSeconds = Math.floor(seconds % 60);
@@ -171,9 +175,9 @@ export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) 
 
                 {/* Main Controls */}
                 <div className="flex items-center justify-center space-x-8">
-                    <button onClick={() => handleSeek(-10)} className="text-white p-2">
+                    <button onClick={() => handleSeek(-10)} className="text-white p-2 flex flex-col items-center">
                         <Undo size={24} />
-                        <span>10s </span>
+                        <span className="text-xs mt-1">10s</span>
                     </button>
                     <button
                         onClick={togglePlayPause}
@@ -188,18 +192,32 @@ export function AudioPlayerWithPdf({ audioPart, onComplete }: AudioPlayerProps) 
                             <Play size={32} className="ml-1" />
                         )}
                     </button>
-                    <button onClick={() => handleSeek(10)} className="text-white p-2">
+                    <button onClick={() => handleSeek(10)} className="text-white p-2 flex flex-col items-center">
                         <Redo size={24} />
-                        <span>10s </span>
+                        <span className="text-xs mt-1">10s</span>
                     </button>
-                </div>
 
-                <audio
-                    ref={audioRef}
-                    src={audioPart.audioUrl}
-                    className="hidden"
-                />
+                    {/* {audioPart.} */}
+                    {!audioProgress && (
+                        <button
+                            onClick={() => setQuizOpen(true)}
+                            className="text-white p-2 flex flex-col items-center hover:bg-white/10 rounded-md transition-colors"
+                            title="Take Quiz"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-clipboard-list">
+                                <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+                                <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                                <path d="M9 14h6" />
+                                <path d="M9 10h6" />
+                                <path d="M9 18h3" />
+                            </svg>
+                            <span className="text-xs mt-1">Quiz</span>
+                        </button>
+                    )}
+                </div>
             </footer>
+
+            <Quiz audioPartId={audioPart.id} open={quizOpen} onOpenChange={setQuizOpen} />
         </div>
     );
 }

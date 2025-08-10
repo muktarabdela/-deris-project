@@ -2,13 +2,11 @@
 
 import { useParams } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { BookOpen, Play, Check, Clock, FileText, ArrowLeft, X } from 'lucide-react';
+import { Play, Check, Clock, ArrowLeft, X } from 'lucide-react';
 import Link from 'next/link';
 import { useData } from '@/context/dataContext';
 import { AudioPartModel } from '@/model/AudioPart';
-import { useState } from 'react';
-import { getActiveCourses } from '@/lib/utils/util';
-import { getTelegramUser } from '@/lib/utils/telegram';
+import { useState, useEffect } from 'react';
 import { StartLearningModal } from '@/components/start-learing';
 import { userService } from '@/lib/services/user';
 import { Button } from '@/components/ui/button';
@@ -17,8 +15,19 @@ import { Button } from '@/components/ui/button';
 export default function DersDetailsPage() {
     const { derses, error, refreshData, users, userAudioProgress, userDersProgress, loading, audioParts, categories } = useData();
     const params = useParams();
-    const tgUser = getTelegramUser();
     const ders = derses?.find((ders) => ders.id === params.id);
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                await refreshData();
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            }
+        };
+        loadData();
+    }, []);
+
 
     const [selectedAudioPart, setSelectedAudioPart] = useState<AudioPartModel | null>(null);
 
@@ -116,7 +125,7 @@ export default function DersDetailsPage() {
                 </motion.div>
             )}
 
-            {/* Audio Parts - Updated Logic */}
+            {/* Audio Parts */}
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -131,27 +140,37 @@ export default function DersDetailsPage() {
                     {audioParts
                         ?.filter((audioPart) => audioPart.ders_id === ders.id && audioPart.is_published)
                         .sort((a, b) => a.order - b.order)
-                        .map((part, index) => {
+                        .map((part, index, array) => {
                             const isCompleted = completedAudioPartIds.has(part.id);
                             const isPlayable = !!part.telegram_file_id;
+                            const previousPart = index > 0 ? array[index - 1] : null;
+                            const isPreviousCompleted = index === 0 || (previousPart && completedAudioPartIds.has(previousPart.id));
+                            const isDisabled = !isPlayable || (index > 0 && !isPreviousCompleted);
 
                             return (
                                 <div
                                     key={part.id}
-                                    onClick={() => isPlayable && handlePlayAudio(part)}
+                                    onClick={() => !isDisabled && handlePlayAudio(part)}
                                     className={`
-            p-4 rounded-xl border cursor-pointer transition-colors 
-            ${isCompleted
+                                        p-4 rounded-xl border transition-colors 
+                                        ${isCompleted
                                             ? 'bg-green-100 border-green-300'
-                                            : 'hover:bg-accent/50 border-border'} 
-            ${!isPlayable ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
+                                            : isDisabled
+                                                ? 'opacity-50 cursor-not-allowed bg-primary/10'
+                                                : 'hover:bg-accent/50 border-border cursor-pointer'
+                                        }`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCompleted ? 'bg-green-600/10 text-green-600' : 'bg-primary/10 text-primary'
-                                                }`}>
-                                                {isCompleted ? <Check className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 
+                                                ${isCompleted
+                                                    ? 'bg-green-600/10 text-green-600'
+                                                    : isDisabled
+                                                        ? 'bg-gray-200 text-gray-400'
+                                                        : 'bg-primary/10 text-primary'}`}>
+                                                {isCompleted ? <Check className="w-5 h-5" /> :
+                                                    isDisabled ? <Clock className="w-5 h-5" /> :
+                                                        <Play className="w-5 h-5" />}
                                             </div>
                                             <div>
                                                 <h3 className="font-medium text-foreground">
@@ -170,7 +189,7 @@ export default function DersDetailsPage() {
                                                 </div>
                                             </div>
                                         </div>
-                                        {!isCompleted && isPlayable && (
+                                        {!isCompleted && isPlayable && !isDisabled && (
                                             <button className="text-primary hover:bg-primary/10 p-2 rounded-full">
                                                 <Play className="w-4 h-4" />
                                             </button>
@@ -180,6 +199,7 @@ export default function DersDetailsPage() {
                                                 Completed
                                             </span>
                                         )}
+
                                     </div>
                                 </div>
                             );

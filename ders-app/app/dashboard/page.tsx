@@ -16,11 +16,6 @@ import { bookmarkService } from '@/lib/services/bookmark';
 import { useEffect, useState } from 'react';
 // import { useToast } from '@/components/ui/use-toast';
 import {
-    getActiveCourses,
-    getCompletedCourses,
-    getLearningStats,
-    getRecentlyAccessedCourses,
-    getAllCoursesWithProgress,
     getCourseProgress // Make sure to import getCourseProgress
 } from '@/lib/utils/util';
 
@@ -35,6 +30,17 @@ export default function DashboardPage() {
     const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
 
     const activeDers = derses?.find((ders) => ders.id === user?.current_ders_id);
+
+    useEffect(() => {
+        const loadData = async () => {
+            try {
+                await refreshData();
+            } catch (error) {
+                console.error('Error refreshing data:', error);
+            }
+        };
+        loadData();
+    }, []);
 
     // Use the utility function to get progress details for the active course
     const activeDersProgress = activeDers
@@ -229,29 +235,45 @@ export default function DashboardPage() {
                                     {audioParts
                                         ?.filter((audioPart) => audioPart.ders_id === activeDers?.id && audioPart.is_published)
                                         .sort((a, b) => a.order - b.order)
-                                        .map((part, index) => {
+                                        .map((part, index, array) => {
                                             const isCompleted = completedAudioPartIds.has(part.id);
                                             const isPlayable = !!part.telegram_file_id;
-
+                                            const previousPart = index > 0 ? array[index - 1] : null;
+                                            const isPreviousCompleted = index === 0 || (previousPart && completedAudioPartIds.has(previousPart.id));
+                                            const isDisabled = !isPlayable || (index > 0 && !isPreviousCompleted);
                                             return (
                                                 <div
                                                     key={part.id}
-                                                    onClick={() => isPlayable && handlePlayAudio(part)}
+                                                    onClick={() => !isDisabled && handlePlayAudio(part)}
                                                     className={`
-            p-4 rounded-xl border cursor-pointer transition-colors 
-            ${isCompleted
-                                                            ? 'bg-green-100 border-green-300'
-                                                            : 'hover:bg-accent/50 border-border'} 
-            ${!isPlayable ? 'opacity-50 cursor-not-allowed' : ''}
-          `}
+                                        p-4 rounded-xl border transition-colors 
+                                        ${isCompleted
+                                                            ? 'bg-primary/50 border-green-300'
+                                                            : isDisabled
+                                                                ? 'opacity-50 cursor-not-allowed bg-primary/10'
+                                                                : 'hover:bg-accent/50 border-border cursor-pointer'
+                                                        }`}
                                                 >
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-3">
-                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isCompleted ? 'bg-green-600/10 text-green-600' : 'bg-primary/10 text-primary'
-                                                                }`}>
-                                                                {isCompleted ? <Check className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 
+                                                ${isCompleted
+                                                                    ? 'bg-green-600/10 text-green-600'
+                                                                    : isDisabled
+                                                                        ? 'bg-gray-200 text-gray-400'
+                                                                        : 'bg-primary/10 text-primary'}`}>
+                                                                {isCompleted ? <Check className="w-5 h-5" /> :
+                                                                    isDisabled ? <Clock className="w-5 h-5" /> :
+                                                                        <Play className="w-5 h-5" />}
                                                             </div>
                                                             <div>
+                                                                <div className="flex items-center justify-end mb-2">
+                                                                    {isCompleted && (
+                                                                        <span className="text-xs px-2 py-1 rounded-full bg-green-200 text-green-800 font-semibold">
+                                                                            Completed
+                                                                        </span>
+                                                                    )}
+                                                                </div>
                                                                 <h3 className="font-medium text-foreground">
                                                                     {index + 1}. {part.title}
                                                                 </h3>
@@ -268,16 +290,12 @@ export default function DashboardPage() {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                        {!isCompleted && isPlayable && (
+                                                        {!isCompleted && isPlayable && !isDisabled && (
                                                             <button className="text-primary hover:bg-primary/10 p-2 rounded-full">
                                                                 <Play className="w-4 h-4" />
                                                             </button>
                                                         )}
-                                                        {isCompleted && (
-                                                            <span className="text-xs px-2 py-1 rounded-full bg-green-200 text-green-800 font-semibold">
-                                                                Completed
-                                                            </span>
-                                                        )}
+
                                                     </div>
                                                 </div>
                                             );

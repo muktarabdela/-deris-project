@@ -25,24 +25,6 @@ export const audioPartService = {
 
         return createdAudioPart;
     },
-    // Get a single audio part by ID
-    async getById(id: string): Promise<AudioPartModel | null> {
-        const { data, error } = await supabase
-            .from('audio_parts')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (error) {
-            if (error.code === 'PGRST116') { // Not found
-                return null;
-            }
-            console.error('Error fetching audio part:', error);
-            throw new Error(error.message);
-        }
-
-        return data;
-    },
     // Get all audio parts with pagination
     async getAll(): Promise<AudioPartModel[]> {
         const { data, error } = await supabase
@@ -127,4 +109,5 @@ export const audioPartService = {
 
         return updatedAudioPart;
     },
+
 };
