@@ -14,7 +14,7 @@ import { Loading } from '@/components/loading';
 import { AudioPartModel } from '@/model/AudioPart';
 import { bookmarkService } from '@/lib/services/bookmark';
 import { useEffect, useState } from 'react';
-// import { useToast } from '@/components/ui/use-toast';
+import { toast } from "sonner";
 import {
     getCourseProgress // Make sure to import getCourseProgress
 } from '@/lib/utils/util';
@@ -81,10 +81,7 @@ export default function DashboardPage() {
                 // Remove bookmark
                 await bookmarkService.delete(dersId);
                 refreshData();
-                // toast({
-                //     title: "Bookmark removed",
-                //     description: "Ders has been removed from your bookmarks.",
-                // });
+                toast("Ders has been removed from your bookmarks.");
             } else {
                 // Add bookmark
                 await bookmarkService.create({
@@ -92,18 +89,11 @@ export default function DashboardPage() {
                     ders_id: dersId,
                 });
                 refreshData();
-                // toast({
-                //     title: "Bookmark added",
-                //     description: "Ders has been added to your bookmarks.",
-                // });
+                toast("Ders has been added to your bookmarks.");
             }
         } catch (error) {
             console.error('Error toggling bookmark:', error);
-            // toast({
-            //     title: "Error",
-            //     description: "Failed to update bookmark. Please try again.",
-            //     variant: "destructive"
-            // });
+            toast("Failed to update bookmark. Please try again.");
         }
     };
 

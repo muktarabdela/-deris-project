@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/hooks/theme-provider";
 import { AuthProvider } from "@/context/authContext";
 import { ConditionalLayoutWrapper } from "@/components/conditional-layout-wrapper";
 import { DataProvider } from "@/context/dataContext";
+import { Toaster } from "@/components/ui/toaster";
 
 export const viewport = {
     width: 'device-width',
@@ -51,6 +52,7 @@ export default function RootLayout({
                         <DataProvider>
                             <ConditionalLayoutWrapper>
                                 {children}
+                                <Toaster />
                             </ConditionalLayoutWrapper>
                         </DataProvider>
                     </ThemeProvider>

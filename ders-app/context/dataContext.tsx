@@ -23,6 +23,8 @@ import { userDersProgressService } from '@/lib/services/userDersProgress';
 import { bookmarkService } from '@/lib/services/bookmark';
 import { ShortDersModel } from '@/model/short-ders';
 import { shortDersService } from '@/lib/services/short-ders';
+import { AdminModel } from '@/model/admins';
+import { adminService } from '@/lib/services/admins';
 
 type DataContextType = {
     derses: DersModel[];
@@ -36,6 +38,7 @@ type DataContextType = {
     userDersProgress: UserDersProgressModel[];
     userAudioProgress: UserAudioPartProgressModel[];
     shortDerses: ShortDersModel[];
+    admins: AdminModel[];
     loading: boolean;
     error: string | null;
     refreshData: () => Promise<void>;
@@ -55,6 +58,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     const [userDersProgress, setUserDersProgress] = useState<UserDersProgressModel[]>([]);
     const [userAudioProgress, setUserAudioProgress] = useState<UserAudioPartProgressModel[]>([]);
     const [shortDerses, setShortDerses] = useState<ShortDersModel[]>([]);
+    const [admins, setAdmins] = useState<AdminModel[]>([]);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +68,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             setError(null);
 
             // Fetch all data in parallel
-            const [dersesData, ustadhsData, categoriesData, usersData, audioPartsData, quizzesData, quizQuestionsData, bookMarksData, userDersProgressData, userAudioProgressData, shortDersesData] = await Promise.all([
+            const [dersesData, ustadhsData, categoriesData, usersData, audioPartsData, quizzesData, quizQuestionsData, bookMarksData, userDersProgressData, userAudioProgressData, shortDersesData, adminsData] = await Promise.all([
                 dersService.getAll(),
                 ustadhService.getAll(),
                 categoryService.getAll(),
@@ -76,6 +80,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 userDersProgressService.getAll(),
                 userAudioPartProgressService.getAll(),
                 shortDersService.getAll(),
+                adminService.getAll(),
             ]);
 
             setDerses(dersesData);
@@ -89,6 +94,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             setUserDersProgress(userDersProgressData);
             setUserAudioProgress(userAudioProgressData);
             setShortDerses(shortDersesData);
+            setAdmins(adminsData);
         } catch (err) {
             console.error('Error fetching data:', err);
             setError('Failed to fetch data. Please try again later.');
@@ -115,6 +121,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
                 userDersProgress,
                 userAudioProgress,
                 shortDerses,
+                admins,
                 loading,
                 error,
                 refreshData: fetchAllData,
