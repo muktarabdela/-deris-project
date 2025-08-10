@@ -7,6 +7,7 @@ export interface UserAudioPartProgressModel {
     quiz_score: number | null;
     quiz_attempts: number;
     is_completed: boolean;
+    points: number;
 
     completedAt: Date;
     createdAt: Date;

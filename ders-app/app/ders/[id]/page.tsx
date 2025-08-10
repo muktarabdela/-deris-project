@@ -152,21 +152,24 @@ export default function DersDetailsPage() {
                                     key={part.id}
                                     onClick={() => !isDisabled && handlePlayAudio(part)}
                                     className={`
-                                        p-4 rounded-xl border transition-colors 
-                                        ${isCompleted
-                                            ? 'bg-green-100 border-green-300'
+        p-4 rounded-xl border transition-colors 
+        ${isCompleted
+                                            // Use 'bg-card' for the completed state to match the dark theme image
+                                            ? 'bg-card border-transparent'
                                             : isDisabled
                                                 ? 'opacity-50 cursor-not-allowed bg-primary/10'
+                                                // Default state uses 'border-border' and hover effect
                                                 : 'hover:bg-accent/50 border-border cursor-pointer'
                                         }`}
                                 >
                                     <div className="flex items-center justify-between">
                                         <div className="flex items-center gap-3">
                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 
-                                                ${isCompleted
-                                                    ? 'bg-green-600/10 text-green-600'
+                ${isCompleted
+                                                    // Dark, semi-transparent background for the icon with a green check
+                                                    ? 'bg-black/20 text-green-500'
                                                     : isDisabled
-                                                        ? 'bg-gray-200 text-gray-400'
+                                                        ? 'bg-foreground/10 text-muted-foreground'
                                                         : 'bg-primary/10 text-primary'}`}>
                                                 {isCompleted ? <Check className="w-5 h-5" /> :
                                                     isDisabled ? <Clock className="w-5 h-5" /> :
@@ -195,7 +198,8 @@ export default function DersDetailsPage() {
                                             </button>
                                         )}
                                         {isCompleted && (
-                                            <span className="text-xs px-2 py-1 rounded-full bg-green-200 text-green-800 font-semibold">
+                                            // Updated badge style to match the image: solid green with white text
+                                            <span className="text-xs px-3 py-1 rounded-full bg-green-600 text-white font-semibold">
                                                 Completed
                                             </span>
                                         )}

@@ -80,22 +80,51 @@ export const userAudioPartProgressService = {
         }
     },
     // update is_completed
-    async updateIsCompleted(id: string, isCompleted: boolean): Promise<UserAudioPartProgressModel> {
-        const { data: updatedAudioPart, error } = await supabase
-            .from(TABLE_NAME)
-            .update({
-                is_completed: isCompleted,
-                completedAt: new Date().toISOString(),
-            })
-            .eq('audio_part_id', id)
-            .select()
-            .single();
+    async updateCompleted(id: string, isCompleted: boolean, points: number): Promise<UserAudioPartProgressModel> {
+        try {
+            // First, try to update the existing record
+            const { data: updatedAudioPart, error: updateError } = await supabase
+                .from(TABLE_NAME)
+                .update({
+                    points: points,
+                    is_completed: isCompleted,
+                    completedAt: isCompleted ? new Date().toISOString() : null,
+                })
+                .eq('audio_part_id', id)
+                .select()
+                .single();
 
-        if (error) {
-            console.error('Error updating audio part:', error);
-            throw new Error(error.message);
+            // If update failed with a not found error, try to insert a new record
+            if (updateError && updateError.code === 'PGRST116') {
+                const { data: insertedAudioPart, error: insertError } = await supabase
+                    .from(TABLE_NAME)
+                    .insert({
+                        audio_part_id: id,
+                        points: points,
+                        is_completed: isCompleted,
+                        completedAt: isCompleted ? new Date().toISOString() : null,
+                        quiz_attempts: 1,
+                        // Add any other required fields here
+                    })
+                    .select()
+                    .single();
+
+                if (insertError) {
+                    console.error('Error creating audio part progress:', insertError);
+                    throw new Error(insertError.message);
+                }
+                return insertedAudioPart;
+            }
+
+            if (updateError) {
+                console.error('Error updating audio part progress:', updateError);
+                throw new Error(updateError.message);
+            }
+
+            return updatedAudioPart;
+        } catch (error) {
+            console.error('Failed to update audio part progress:', error);
+            throw error;
         }
-
-        return updatedAudioPart;
     },
 };

@@ -63,10 +63,10 @@ export default function Quiz({
         try {
             const score = calculateScore();
             console.log('score', score);
-            if (score >= 70 && user) {
+            if (score >= 60 && user) {
                 const currentPoints = user.points || 0;
                 const updatePoints = await userService.updatePoints(user.id, currentPoints + 10);
-                const updateAudioPart = await userAudioPartProgressService.updateIsCompleted(audioPartId, true);
+                const updateAudioPart = await userAudioPartProgressService.updateCompleted(audioPartId, true, 10);
                 console.log('updatePoints', updatePoints);
                 console.log('updateAudioPart', updateAudioPart);
                 // onOpenChange(false);
@@ -105,7 +105,7 @@ export default function Quiz({
                     <div className="text-center py-6">
                         <div className="text-4xl font-bold text-primary mb-2">{score}%</div>
                         <p className="text-lg mb-6">
-                            {score >= 70 ? "Great job! 🎉" : "Keep practicing! 💪"}
+                            {score >= 60 ? "Great job! 🎉" : "Keep practicing! 💪"}
                         </p>
                         <div className="space-y-4 text-left max-h-[50vh] overflow-y-auto">
                             {quizQuestionsList?.map((question, index) => (

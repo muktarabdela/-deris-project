@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from 'react';
 import { useData } from '@/context/dataContext';
 import { getTelegramUser } from '@/lib/utils/telegram';
 import { BookOpen, BookmarkCheck, Play } from 'lucide-react';
@@ -11,12 +10,10 @@ import { bookmarkService } from '@/lib/services/bookmark';
 import { Loading } from '@/components/loading';
 import { StartLearningModal } from '@/components/start-learing';
 import { userService } from '@/lib/services/user';
-// import { useToast } from '@/components/ui/use-toast';
+import { toast } from "sonner";
 
 export default function BookmarkPage() {
-    const { derses, categories, users, bookMarks, refreshData } = useData();
-    const [isLoading, setIsLoading] = useState(true);
-    // const { toast } = useToast();
+    const { derses, categories, users, bookMarks, refreshData, loading } = useData();
     const tgUser = getTelegramUser();
     const user = users?.find((user) => Number(user.telegram_user_id) === tgUser?.id);
     const userBookmarks = bookMarks?.filter(b => b.user_id === user?.id);
@@ -25,26 +22,19 @@ export default function BookmarkPage() {
         try {
             await bookmarkService.delete(dersId);
             refreshData();
-            // toast({
-            //     title: "Bookmark removed",
-            //     description: "Ders has been removed from your bookmarks.",
-            // });
+            toast("Ders has been removed from your bookmarks.");
         } catch (error) {
             console.error('Error removing bookmark:', error);
-            // toast({
-            //     title: "Error",
-            //     description: "Failed to remove bookmark.",
-            //     variant: "destructive"
-            // });
+            toast("Failed to remove bookmark.");
         }
     };
 
     const filteredDerses = derses?.filter(ders => userBookmarks?.some(b => b.ders_id === ders.id)) || [];
-    // if (isLoading) {
-    //     return (
-    //         <Loading />
-    //     );
-    // }
+    if (loading) {
+        return (
+            <Loading />
+        );
+    }
 
     return (
         <div className="container mx-auto px-4 py-8">

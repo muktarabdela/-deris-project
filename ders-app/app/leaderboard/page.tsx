@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight, Trophy } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Loading } from '@/components/loading';
 
 export default function LeaderboardPage() {
-    const { users, derses, loading } = useData();
+    const { users, derses, loading, userAudioProgress } = useData();
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedDers, setSelectedDers] = useState<string | null>(null);
     const itemsPerPage = 10;
@@ -23,11 +24,20 @@ export default function LeaderboardPage() {
     );
 
     // Filter users by selected ders or current user's ders
-    const filteredUsers = users?.filter(user =>
-        selectedDers
-            ? user.current_ders_id === selectedDers
-            : user.current_ders_id === currentUser?.current_ders_id
-    ).sort((a, b) => (b.points || 0) - (a.points || 0));
+    const filteredUsers = users
+        ?.filter(user =>
+            selectedDers
+                ? user.current_ders_id === selectedDers
+                : user.current_ders_id === currentUser?.current_ders_id
+        )
+        .map(user => ({
+            ...user,
+            // Calculate points from userAudioProgress for this user
+            points: userAudioProgress
+                ?.filter(progress => progress.user_id === user.id)
+                .reduce((sum, progress) => sum + (progress.points || 0), 0) || 0
+        }))
+        .sort((a, b) => (b.points || 0) - (a.points || 0));
 
     // Get unique ders from users who are learning the same ders as current user
     const availableDerses = Array.from(new Set(
@@ -48,9 +58,7 @@ export default function LeaderboardPage() {
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
-            </div>
+            <Loading />
         );
     }
 
@@ -67,14 +75,6 @@ export default function LeaderboardPage() {
 
                     {availableDerses && availableDerses.length > 0 && (
                         <div className="flex flex-wrap gap-2">
-                            <Button
-                                variant={!selectedDers ? 'default' : 'outline'}
-                                size="sm"
-                                onClick={() => setSelectedDers(null)}
-                                className="text-sm"
-                            >
-                                ሁሉም
-                            </Button>
                             {availableDerses?.map(ders => (
                                 <Button
                                     key={ders?.id}

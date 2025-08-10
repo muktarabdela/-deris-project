@@ -8,9 +8,10 @@ const NAVIGATION_ROUTES = [
     '/dashboard',
     '/leaderboard',
     '/bookmark',
-    '/ders',
+    '/ders/:dersId',
     '/all-ders',
     '/profile',
+    // "/ders/:dersId/audio/:audioId"
     // Add other routes where bottom navigation should appear
 ];
 

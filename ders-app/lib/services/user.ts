@@ -154,6 +154,7 @@ export const userService = {
                 const newUserAudioPartProgresses = audioParts.map((part) => ({
                     user_id: userId,
                     audio_part_id: part.id,
+                    points: 0,
                     is_completed: false,
                     quiz_attempts: 0,
                 }));
