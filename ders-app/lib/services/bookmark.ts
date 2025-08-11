@@ -8,7 +8,7 @@ const TABLE_NAME = 'bookmarks';
 
 export const bookmarkService = {
     // Create a new bookmark
-    async create(bookmark: CreateBookmarkInput): Promise<BookmarkModel> {
+    async bookmarkDers(bookmark: CreateBookmarkInput): Promise<BookmarkModel> {
         console.log(bookmark);
         const { data, error } = await supabase
             .from(TABLE_NAME)
@@ -22,6 +22,46 @@ export const bookmarkService = {
         }
 
         return data;
+    },
+    // unbookmark ders
+    async unbookmarkDers(dersId: string): Promise<void> {
+        const { error } = await supabase
+            .from(TABLE_NAME)
+            .delete()
+            .eq('ders_id', dersId);
+
+        if (error) {
+            console.error('Error deleting bookmark:', error);
+            throw new Error(error.message);
+        }
+    },
+    // bookmark short ders
+    async bookmarkShortDers(bookmark: CreateBookmarkInput): Promise<BookmarkModel> {
+        console.log(bookmark);
+        const { data, error } = await supabase
+            .from(TABLE_NAME)
+            .insert(bookmark)
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Error creating bookmark:', error);
+            throw new Error(error.message);
+        }
+
+        return data;
+    },
+    // unbookmark short ders
+    async unbookmarkShortDers(dersId: string): Promise<void> {
+        const { error } = await supabase
+            .from(TABLE_NAME)
+            .delete()
+            .eq('ders_id', dersId);
+
+        if (error) {
+            console.error('Error deleting bookmark:', error);
+            throw new Error(error.message);
+        }
     },
     // Get all bookmarks
     async getAll(): Promise<BookmarkModel[]> {
@@ -67,32 +107,5 @@ export const bookmarkService = {
         }
 
         return data;
-    },
-    // Delete a bookmark
-    async delete(dersId: string): Promise<void> {
-        const { error } = await supabase
-            .from(TABLE_NAME)
-            .delete()
-            .eq('ders_id', dersId);
-
-        if (error) {
-            console.error('Error deleting bookmark:', error);
-            throw new Error(error.message);
-        }
-    },
-    // Search bookmarks by name
-    async search(query: string): Promise<BookmarkModel[]> {
-        const { data, error } = await supabase
-            .from(TABLE_NAME)
-            .select('*')
-            .ilike('name', `%${query}%`)
-            .order('name', { ascending: true });
-
-        if (error) {
-            console.error('Error searching bookmarks:', error);
-            throw new Error(error.message);
-        }
-
-        return data || [];
     },
 };

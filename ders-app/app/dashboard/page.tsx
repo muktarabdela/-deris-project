@@ -71,7 +71,7 @@ export default function DashboardPage() {
             .map(progress => progress.audio_part_id)
     );
 
-    const toggleBookmark = async (dersId: string) => {
+    const toggleDersBookmark = async (dersId: string) => {
         if (!tgUser?.id) return;
 
         try {
@@ -79,17 +79,44 @@ export default function DashboardPage() {
 
             if (isBookmarked) {
                 // Remove bookmark
-                await bookmarkService.delete(dersId);
+                await bookmarkService.unbookmarkDers(dersId);
                 refreshData();
                 toast("Ders has been removed from your bookmarks.");
             } else {
                 // Add bookmark
-                await bookmarkService.create({
+                await bookmarkService.bookmarkDers({
                     user_id: user?.id || '',
                     ders_id: dersId,
+                    short_ders_id: null,
                 });
                 refreshData();
                 toast("Ders has been added to your bookmarks.");
+            }
+        } catch (error) {
+            console.error('Error toggling bookmark:', error);
+            toast("Failed to update bookmark. Please try again.");
+        }
+    };
+    const toggleShortDersBookmark = async (dersId: string) => {
+        if (!tgUser?.id) return;
+
+        try {
+            const isBookmarked = bookMarkedDerses?.some((bookmark) => bookmark.short_ders_id === dersId);
+
+            if (isBookmarked) {
+                // Remove bookmark
+                await bookmarkService.unbookmarkShortDers(dersId);
+                refreshData();
+                toast("Short Ders has been removed from your bookmarks.");
+            } else {
+                // Add bookmark
+                await bookmarkService.bookmarkShortDers({
+                    user_id: user?.id || '',
+                    short_ders_id: dersId,
+                    ders_id: null,
+                });
+                refreshData();
+                toast("Short Ders has been added to your bookmarks.");
             }
         } catch (error) {
             console.error('Error toggling bookmark:', error);
@@ -231,14 +258,15 @@ export default function DashboardPage() {
                                             const previousPart = index > 0 ? array[index - 1] : null;
                                             const isPreviousCompleted = index === 0 || (previousPart && completedAudioPartIds.has(previousPart.id));
                                             const isDisabled = !isPlayable || (index > 0 && !isPreviousCompleted);
+
                                             return (
                                                 <div
                                                     key={part.id}
                                                     onClick={() => !isDisabled && handlePlayAudio(part)}
                                                     className={`
-                                        p-4 rounded-xl border transition-colors 
-                                        ${isCompleted
-                                                            ? 'bg-primary/50 border-green-300'
+                                    p-4 rounded-xl border transition-colors 
+                                    ${isCompleted
+                                                            ? 'bg-primary/10 border-transparent'
                                                             : isDisabled
                                                                 ? 'opacity-50 cursor-not-allowed bg-primary/10'
                                                                 : 'hover:bg-accent/50 border-border cursor-pointer'
@@ -247,23 +275,17 @@ export default function DashboardPage() {
                                                     <div className="flex items-center justify-between">
                                                         <div className="flex items-center gap-3">
                                                             <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 
-                                                ${isCompleted
-                                                                    ? 'bg-green-600/10 text-green-600'
+                                            ${isCompleted
+                                                                    // Dark, semi-transparent background for the icon with a green check
+                                                                    ? 'bg-black/20 text-green-500'
                                                                     : isDisabled
-                                                                        ? 'bg-gray-200 text-gray-400'
+                                                                        ? 'bg-foreground/10 text-muted-foreground'
                                                                         : 'bg-primary/10 text-primary'}`}>
                                                                 {isCompleted ? <Check className="w-5 h-5" /> :
                                                                     isDisabled ? <Clock className="w-5 h-5" /> :
                                                                         <Play className="w-5 h-5" />}
                                                             </div>
                                                             <div>
-                                                                <div className="flex items-center justify-end mb-2">
-                                                                    {isCompleted && (
-                                                                        <span className="text-xs px-2 py-1 rounded-full bg-green-200 text-green-800 font-semibold">
-                                                                            Completed
-                                                                        </span>
-                                                                    )}
-                                                                </div>
                                                                 <h3 className="font-medium text-foreground">
                                                                     {index + 1}. {part.title}
                                                                 </h3>
@@ -284,6 +306,12 @@ export default function DashboardPage() {
                                                             <button className="text-primary hover:bg-primary/10 p-2 rounded-full">
                                                                 <Play className="w-4 h-4" />
                                                             </button>
+                                                        )}
+                                                        {isCompleted && (
+                                                            // Updated badge style to match the image: solid green with white text
+                                                            <span className="text-xs px-3 py-1 rounded-full bg-green-600 text-white font-semibold">
+                                                                Completed
+                                                            </span>
                                                         )}
 
                                                     </div>
@@ -325,7 +353,7 @@ export default function DashboardPage() {
                                     className="relative group"
                                 >
                                     <button
-                                        onClick={() => toggleBookmark(ders.id)}
+                                        onClick={() => toggleDersBookmark(ders.id)}
                                         className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
                                         aria-label={bookMarkedDerses?.some((bookmark) => bookmark.ders_id === ders.id) ? "Remove from bookmarks" : "Add to bookmarks"}
                                     >
@@ -473,7 +501,7 @@ export default function DashboardPage() {
                             className="relative group"
                         >
                             <button
-                                onClick={() => toggleBookmark(ders.id)}
+                                onClick={() => toggleShortDersBookmark(ders.id)}
                                 className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
                                 aria-label={bookMarkedDerses?.some((bookmark) => bookmark.ders_id === ders.id) ? "Remove from bookmarks" : "Add to bookmarks"}
                             >

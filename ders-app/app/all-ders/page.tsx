@@ -3,7 +3,7 @@
 import { useData } from '@/context/dataContext';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
-import { BookmarkPlus, BookmarkCheck, Filter, X, Search, Play, Pause } from 'lucide-react';
+import { BookmarkPlus, BookmarkCheck, Filter, X, Search, Play, Pause, Loader } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -15,13 +15,20 @@ import { StartLearningModal } from '@/components/start-learing';
 import { useRouter } from 'next/navigation';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loading } from '@/components/loading';
-
+import { ShortDersPlayer } from '@/components/ShortDersPlayer';
+import { ShortDersModel } from '@/model/short-ders';
 
 export default function AllDersPage() {
     const router = useRouter();
     const { derses, shortDerses, categories, loading, error, refreshData, bookMarks, users } = useData();
     const [searchTerm, setSearchTerm] = useState('');
-    const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+    const [activeAudio, setActiveAudio] = useState<{ id: string; src: string; isLoading: boolean; error: string | null } | null>(null);
+
+    const [selectedDersCategories, setSelectedDersCategories] = useState<string[]>([]);
+    const [selectedShortDersCategories, setSelectedShortDersCategories] = useState<string[]>([]);
+
+
     const [showFilters, setShowFilters] = useState(false);
     const [filteredDerses, setFilteredDerses] = useState(derses);
     const [filteredShortDerses, setFilteredShortDerses] = useState(shortDerses);
@@ -30,94 +37,139 @@ export default function AllDersPage() {
     const user = users?.find((u) => Number(u.telegram_user_id) === tgUser?.id);
     const bookMarkedDerses = bookMarks?.filter((b) => b.user_id === user?.id);
 
-
+    const [loadingBookmarkId, setLoadingBookmarkId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (activeTab === 'all') {
-            let result = [...derses];
+        const result = derses.filter(ders => {
+            const term = searchTerm.toLowerCase();
+            const matchesSearch = term === '' ||
+                ders.title.toLowerCase().includes(term) ||
+                ders.description?.toLowerCase().includes(term);
 
-            if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                result = result.filter(ders =>
-                    ders.title.toLowerCase().includes(term) ||
-                    ders.description?.toLowerCase().includes(term)
-                );
-            }
+            const matchesCategory = selectedDersCategories.length === 0 ||
+                selectedDersCategories.includes(ders.category_id);
 
-            if (selectedCategories.length > 0) {
-                result = result.filter(ders =>
-                    selectedCategories.includes(ders.category_id)
-                );
-            }
+            return matchesSearch && matchesCategory;
+        });
+        setFilteredDerses(result);
+    }, [searchTerm, selectedDersCategories, derses]);
 
-            setFilteredDerses(result);
-        } else if (activeTab === 'short-ders') {
-            let result = [...shortDerses];
+    useEffect(() => {
+        const result = shortDerses.filter(shortDers => {
+            const term = searchTerm.toLowerCase();
+            const matchesSearch = term === '' ||
+                shortDers.title.toLowerCase().includes(term) ||
+                shortDers.description?.toLowerCase().includes(term);
 
-            if (searchTerm) {
-                const term = searchTerm.toLowerCase();
-                result = result.filter(shortDers =>
-                    shortDers.title.toLowerCase().includes(term) ||
-                    shortDers.description?.toLowerCase().includes(term)
-                );
-            }
+            const matchesCategory = selectedShortDersCategories.length === 0 ||
+                selectedShortDersCategories.includes(shortDers.category_id);
 
-            if (selectedCategories.length > 0) {
-                result = result.filter(ders =>
-                    selectedCategories.includes(ders.category_id)
-                );
-            }
+            return matchesSearch && matchesCategory;
+        });
+        setFilteredShortDerses(result);
+    }, [searchTerm, selectedShortDersCategories, shortDerses]);
 
-            setFilteredShortDerses(result);
+    useEffect(() => {
+        if (activeTab !== 'short-ders') {
+            setActiveAudio(null);
         }
-    }, [searchTerm, selectedCategories, derses, shortDerses, activeTab]);
+    }, [activeTab]);
 
     const toggleCategory = (categoryId: string) => {
         if (activeTab === 'all') {
-            setSelectedCategories(prev =>
+            setSelectedDersCategories(prev =>
                 prev.includes(categoryId)
                     ? prev.filter(id => id !== categoryId)
                     : [...prev, categoryId]
             );
         } else if (activeTab === 'short-ders') {
-            setSelectedCategories(prev =>
+            setSelectedShortDersCategories(prev =>
                 prev.includes(categoryId)
                     ? prev.filter(id => id !== categoryId)
                     : [...prev, categoryId]
             );
-        }
-    };
-    useEffect(() => {
-        console.log('shortDerses from context:', shortDerses);
-    }, [shortDerses]);
-    const toggleBookmark = async (dersId: string) => {
-        if (!user?.id) return;
-
-        try {
-            const isBookmarked = bookMarkedDerses?.some(b => b.ders_id === dersId);
-
-            if (isBookmarked) {
-                await bookmarkService.delete(dersId);
-            } else {
-                await bookmarkService.create({
-                    user_id: user.id,
-                    ders_id: dersId,
-                });
-            }
-            refreshData();
-        } catch (error) {
-            console.error('Error toggling bookmark:', error);
         }
     };
 
     const clearFilters = () => {
         setSearchTerm('');
-        setSelectedCategories([]);
+        setSelectedDersCategories([]);
+        setSelectedShortDersCategories([]);
+    };
+
+    const toggleDersBookmark = async (dersId: string) => {
+        if (!user?.id) return;
+        setLoadingBookmarkId(dersId);
+
+        try {
+            const isBookmarked = bookMarkedDerses?.some(b => b.ders_id === dersId);
+
+            if (isBookmarked) {
+                await bookmarkService.unbookmarkDers(dersId);
+            } else {
+                await bookmarkService.bookmarkDers({
+                    user_id: user.id,
+                    ders_id: dersId,
+                    short_ders_id: null,
+                });
+            }
+            refreshData();
+        } catch (error) {
+            console.error('Error toggling bookmark:', error);
+        } finally {
+            setLoadingBookmarkId(null);
+        }
+    };
+
+    const toggleShortDersBookmark = async (dersId: string) => {
+        if (!user?.id) return;
+        setLoadingBookmarkId(dersId);
+
+        try {
+            const isBookmarked = bookMarkedDerses?.some(b => b.ders_id === dersId);
+
+            if (isBookmarked) {
+                const result = await bookmarkService.unbookmarkShortDers(dersId);
+            } else {
+                const result = await bookmarkService.bookmarkShortDers({
+                    user_id: user.id,
+                    short_ders_id: dersId,
+                    ders_id: null,
+                });
+            }
+            refreshData();
+        } catch (error) {
+            console.error('Error toggling bookmark:', error);
+        } finally {
+            setLoadingBookmarkId(null);
+        }
+    };
+
+    const handlePlayShortDers = async (ders: ShortDersModel) => {
+        if (activeAudio?.id === ders.id) {
+            setActiveAudio(null);
+            return;
+        }
+        setActiveAudio({ id: ders.id, src: '', isLoading: true, error: null });
+        try {
+            const response = await fetch(`/api/audio/${ders.telegram_file_id}`);
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Failed to fetch audio file.');
+            }
+            setActiveAudio({ id: ders.id, src: data.downloadUrl, isLoading: false, error: null });
+        } catch (err: any) {
+            console.error("Error fetching short ders audio:", err);
+            setActiveAudio({ id: ders.id, src: '', isLoading: false, error: err.message });
+        }
     };
 
     if (loading) {
         return <Loading />
     }
+
+    const activeCategories = activeTab === 'all' ? selectedDersCategories : selectedShortDersCategories;
+    const setActiveCategories = activeTab === 'all' ? setSelectedDersCategories : setSelectedShortDersCategories;
 
     return (
         <div className="container mx-auto px-4 py-6 max-w-7xl">
@@ -154,9 +206,9 @@ export default function AllDersPage() {
                         <div>
                             <div className="flex justify-between items-center mb-2">
                                 <h3 className="font-medium">Categories</h3>
-                                {selectedCategories.length > 0 && (
+                                {activeCategories.length > 0 && (
                                     <button
-                                        onClick={() => setSelectedCategories([])}
+                                        onClick={() => setActiveCategories([])} // Use the dynamic setter
                                         className="text-xs text-primary hover:underline"
                                     >
                                         Clear
@@ -167,7 +219,7 @@ export default function AllDersPage() {
                                 {categories.map((category) => (
                                     <Button
                                         key={category.id}
-                                        variant={selectedCategories.includes(category.id) ? 'default' : 'outline'}
+                                        variant={activeCategories.includes(category.id) ? 'default' : 'outline'}
                                         size="sm"
                                         onClick={() => toggleCategory(category.id)}
                                         className="rounded-full"
@@ -178,7 +230,7 @@ export default function AllDersPage() {
                             </div>
                         </div>
 
-                        {(selectedCategories.length > 0 || searchTerm) && (
+                        {(activeCategories.length > 0 || searchTerm) && (
                             <Button
                                 variant="ghost"
                                 onClick={clearFilters}
@@ -223,7 +275,7 @@ export default function AllDersPage() {
                                 </Button>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-2   gap-6">
+                            <div className="grid grid-cols-1 gap-6">
                                 {filteredDerses.map((ders) => {
                                     const isBookmarked = bookMarkedDerses?.some(b => b.ders_id === ders.id);
                                     const category = categories.find(c => c.id === ders.category_id);
@@ -236,11 +288,14 @@ export default function AllDersPage() {
                                             className="relative group"
                                         >
                                             <button
-                                                onClick={() => toggleBookmark(ders.id)}
+                                                onClick={() => toggleDersBookmark(ders.id)}
                                                 className="absolute top-2 right-2 p-2 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
                                                 aria-label={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+                                                disabled={loadingBookmarkId === ders.id}
                                             >
-                                                {isBookmarked ? (
+                                                {loadingBookmarkId === ders.id ? (
+                                                    <Loader className="w-5 h-5 animate-spin text-primary" />
+                                                ) : isBookmarked ? (
                                                     <BookmarkCheck className="w-5 h-5 text-primary fill-primary" />
                                                 ) : (
                                                     <BookmarkPlus className="w-5 h-5 text-gray-400 hover:text-primary/50" />
@@ -321,9 +376,9 @@ export default function AllDersPage() {
                         ) : (
                             <div className="grid grid-cols-2   gap-6">
                                 {filteredShortDerses.map((ders) => {
-                                    const isBookmarked = bookMarkedDerses?.some(b => b.ders_id === ders.id);
+                                    const isBookmarked = bookMarkedDerses?.some(b => b.short_ders_id === ders.id);
                                     const category = categories.find(c => c.id === ders.category_id);
-
+                                    const isActive = activeAudio?.id === ders.id;
                                     return (
                                         <motion.div
                                             key={ders.id}
@@ -332,11 +387,14 @@ export default function AllDersPage() {
                                             className="relative group"
                                         >
                                             <button
-                                                onClick={() => toggleBookmark(ders.id)}
+                                                onClick={() => toggleShortDersBookmark(ders.id)}
                                                 className="absolute top-2 right-2 p-1 rounded-full bg-white/80 hover:bg-white transition-colors z-10"
                                                 aria-label={isBookmarked ? "Remove from bookmarks" : "Add to bookmarks"}
+                                                disabled={loadingBookmarkId === ders.id}
                                             >
-                                                {isBookmarked ? (
+                                                {loadingBookmarkId === ders.id ? (
+                                                    <Loader className="w-4 h-4 animate-spin text-primary" />
+                                                ) : isBookmarked ? (
                                                     <BookmarkCheck className="w-4 h-4 text-primary fill-primary" />
                                                 ) : (
                                                     <BookmarkPlus className="w-4 h-4 text-gray-400 hover:text-primary/50" />
@@ -356,9 +414,32 @@ export default function AllDersPage() {
                                                 </div>
 
                                                 <div className="mt-4">
-                                                    <Button variant="default" className="w-full">
-                                                        <Play className="w-4 h-4 mr-2" />
-                                                    </Button>
+                                                    {isActive ? (
+                                                        activeAudio.isLoading ? (
+                                                            <div className="flex items-center justify-center p-2 text-muted-foreground">
+                                                                <Loader className="w-5 h-5 mr-2 animate-spin" />
+                                                            </div>
+                                                        ) : activeAudio.error ? (
+                                                            <div className="text-destructive text-sm p-2 text-center">
+                                                                Error: Failed to load audio.
+                                                            </div>
+                                                        ) : (
+                                                            <ShortDersPlayer
+                                                                src={activeAudio.src}
+                                                                onEnded={() => setActiveAudio(null)} // Deactivate on finish
+                                                                autoPlay={true}
+                                                            />
+                                                        )
+                                                    ) : (
+                                                        <Button
+                                                            variant="default"
+                                                            className="w-full"
+                                                            onClick={() => handlePlayShortDers(ders)}
+                                                        >
+                                                            <Play className="w-4 h-4 mr-2" />
+                                                            <span>Play</span>
+                                                        </Button>
+                                                    )}
                                                 </div>
                                             </div>
                                         </motion.div>
